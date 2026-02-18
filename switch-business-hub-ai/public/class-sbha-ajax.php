@@ -72,9 +72,16 @@ class SBHA_Ajax {
         
         // Invoice creation (from shop)
         add_action('wp_ajax_sbha_create_invoice', array($this, 'create_invoice'));
+        add_action('wp_ajax_nopriv_sbha_create_invoice', array($this, 'create_invoice'));
         
         // Payment proof upload
         add_action('wp_ajax_sbha_upload_payment_proof', array($this, 'upload_payment_proof'));
+
+        // Frontend super-admin controls
+        add_action('wp_ajax_sbha_super_admin_update_quote_status', array($this, 'super_admin_update_quote_status'));
+        add_action('wp_ajax_nopriv_sbha_super_admin_update_quote_status', array($this, 'super_admin_update_quote_status'));
+        add_action('wp_ajax_sbha_super_admin_update_product_variation', array($this, 'super_admin_update_product_variation'));
+        add_action('wp_ajax_nopriv_sbha_super_admin_update_product_variation', array($this, 'super_admin_update_product_variation'));
     }
 
     /**
@@ -418,7 +425,18 @@ class SBHA_Ajax {
         
         $customer_id = $this->get_customer_id();
         if (!$customer_id) {
-            wp_send_json_error('Please login to place an order.');
+            $guest_name = sanitize_text_field($_POST['guest_name'] ?? '');
+            $guest_phone = sanitize_text_field($_POST['guest_phone'] ?? '');
+            $guest_email = sanitize_email($_POST['guest_email'] ?? '');
+
+            if (empty($guest_name) || empty($guest_phone)) {
+                wp_send_json_error('Please provide your name and WhatsApp number.');
+            }
+
+            $customer_id = $this->resolve_or_create_guest_customer($guest_name, $guest_phone, $guest_email);
+            if (!$customer_id) {
+                wp_send_json_error('Could not create guest checkout profile. Please try again.');
+            }
         }
         
         $items = json_decode(stripslashes($_POST['items'] ?? '[]'), true);
@@ -976,6 +994,69 @@ class SBHA_Ajax {
         return $session;
     }
 
+    private function resolve_or_create_guest_customer($name, $phone, $email = '') {
+        global $wpdb;
+
+        $phone = preg_replace('/[^0-9]/', '', (string) $phone);
+        if (strlen($phone) < 9) {
+            return 0;
+        }
+
+        $email = sanitize_email($email);
+        $table = $wpdb->prefix . 'sbha_customers';
+
+        if (!empty($email)) {
+            $existing = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$table} WHERE cell_number = %s OR whatsapp_number = %s OR email = %s LIMIT 1",
+                $phone,
+                $phone,
+                $email
+            ), ARRAY_A);
+        } else {
+            $existing = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$table} WHERE cell_number = %s OR whatsapp_number = %s LIMIT 1",
+                $phone,
+                $phone
+            ), ARRAY_A);
+        }
+
+        if ($existing && !empty($existing['id'])) {
+            // Keep existing account and refresh contact details.
+            $parts = explode(' ', trim((string) $name), 2);
+            $update = array(
+                'first_name' => $parts[0] ?: ($existing['first_name'] ?? 'Guest'),
+                'last_name' => $parts[1] ?? ($existing['last_name'] ?? ''),
+                'cell_number' => $phone,
+                'whatsapp_number' => $phone
+            );
+            if (!empty($email)) {
+                $update['email'] = $email;
+            }
+            $wpdb->update($table, $update, array('id' => intval($existing['id'])));
+            return intval($existing['id']);
+        }
+
+        $parts = explode(' ', trim((string) $name), 2);
+        $resolved_email = $this->resolve_customer_email($email, $phone);
+
+        $inserted = $wpdb->insert($table, array(
+            'first_name' => $parts[0] ?: 'Guest',
+            'last_name' => $parts[1] ?? '',
+            'business_name' => '',
+            'email' => $resolved_email,
+            'cell_number' => $phone,
+            'whatsapp_number' => $phone,
+            'password' => password_hash(wp_generate_password(20), PASSWORD_DEFAULT),
+            'status' => 'active'
+        ));
+
+        if (!$inserted) {
+            return 0;
+        }
+
+        return intval($wpdb->insert_id);
+    }
+
     private function get_customer_id() {
         $c = $this->get_customer();
         return $c ? $c['id'] : null;
@@ -1057,6 +1138,96 @@ class SBHA_Ajax {
         }
 
         return $files;
+    }
+
+    private function is_super_admin_customer($customer = null) {
+        if (!$customer || !is_array($customer)) {
+            return false;
+        }
+
+        $admin_email = strtolower((string) get_option('sbha_super_admin_email', 'tinashe@switchgraphics.co.za'));
+        $admin_phone = preg_replace('/[^0-9]/', '', (string) get_option('sbha_super_admin_phone', '0681474232'));
+        $customer_email = strtolower((string) ($customer['email'] ?? ''));
+        $customer_phone = preg_replace('/[^0-9]/', '', (string) ($customer['cell_number'] ?? $customer['whatsapp_number'] ?? ''));
+
+        if (!empty($admin_email) && $customer_email === $admin_email) {
+            return true;
+        }
+        if (!empty($admin_phone) && $customer_phone === $admin_phone) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function super_admin_update_quote_status() {
+        check_ajax_referer('sbha_nonce', 'nonce');
+        global $wpdb;
+
+        $customer = $this->get_customer();
+        if (!$this->is_super_admin_customer($customer)) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $quote_id = intval($_POST['quote_id'] ?? 0);
+        $status = sanitize_text_field($_POST['status'] ?? '');
+        $allowed = array('pending', 'reviewed', 'quoted', 'accepted', 'rejected', 'expired', 'processing', 'ready', 'completed', 'cancelled');
+
+        if ($quote_id < 1 || !in_array($status, $allowed, true)) {
+            wp_send_json_error('Invalid status update.');
+        }
+
+        $updated = $wpdb->update(
+            $wpdb->prefix . 'sbha_quotes',
+            array('status' => $status),
+            array('id' => $quote_id)
+        );
+
+        if ($updated === false) {
+            wp_send_json_error('Unable to update status.');
+        }
+
+        wp_send_json_success(array('message' => 'Status updated.'));
+    }
+
+    public function super_admin_update_product_variation() {
+        check_ajax_referer('sbha_nonce', 'nonce');
+
+        $customer = $this->get_customer();
+        if (!$this->is_super_admin_customer($customer)) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $product_key = sanitize_text_field($_POST['product_key'] ?? '');
+        $variation_index = intval($_POST['variation_index'] ?? -1);
+        $price = floatval($_POST['price'] ?? 0);
+
+        if ($product_key === '' || $variation_index < 0 || $price <= 0) {
+            wp_send_json_error('Invalid product update input.');
+        }
+
+        require_once SBHA_PLUGIN_DIR . 'includes/class-sbha-products.php';
+        $all_products = SBHA_Products::get_all();
+        if (empty($all_products[$product_key]) || empty($all_products[$product_key]['variations'][$variation_index])) {
+            wp_send_json_error('Product variation not found.');
+        }
+
+        $custom_products = get_option('sbha_custom_products', array());
+        $target = $custom_products[$product_key] ?? $all_products[$product_key];
+        if (empty($target['variations'][$variation_index])) {
+            wp_send_json_error('Variation not found.');
+        }
+
+        $target['variations'][$variation_index]['price'] = $price;
+        $custom_products[$product_key] = $target;
+        update_option('sbha_custom_products', $custom_products);
+
+        wp_send_json_success(array(
+            'message' => 'Product pricing updated.',
+            'product_key' => $product_key,
+            'variation_index' => $variation_index,
+            'price' => $price
+        ));
     }
 
     private function notify($customer_id, $type, $title, $message, $link = '') {
@@ -1216,11 +1387,19 @@ class SBHA_Ajax {
         $phone = sanitize_text_field($_POST['phone'] ?? '');
         $password = $_POST['password'] ?? '';
         $quote_data = json_decode(stripslashes($_POST['quote_data'] ?? '{}'), true);
+        $requested_document = sanitize_text_field($_POST['document_type'] ?? '');
         $transcript_raw = $_POST['transcript'] ?? '';
         $transcript = is_string($transcript_raw) ? sanitize_textarea_field($transcript_raw) : wp_json_encode($transcript_raw);
 
         if (!is_array($quote_data)) {
             $quote_data = array();
+        }
+
+        if (empty($requested_document)) {
+            $requested_document = sanitize_text_field($quote_data['preferred_document'] ?? 'quote');
+        }
+        if (!in_array($requested_document, array('quote', 'invoice'), true)) {
+            $requested_document = 'quote';
         }
 
         // Phone is required
@@ -1237,9 +1416,14 @@ class SBHA_Ajax {
 
         $email = $this->resolve_customer_email($email_input, $phone);
 
-        // Generate quote number
-        $count = intval($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sbha_quotes WHERE quote_number LIKE 'QT-SBH%'")) + 1;
-        $quote_number = 'QT-SBH' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+        // Generate document number
+        if ($requested_document === 'invoice') {
+            $count = intval($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sbha_quotes WHERE quote_number LIKE 'INV-SBH%'")) + 1;
+            $quote_number = 'INV-SBH' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+        } else {
+            $count = intval($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sbha_quotes WHERE quote_number LIKE 'QT-SBH%'")) + 1;
+            $quote_number = 'QT-SBH' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+        }
 
         // Check if customer exists
         $table = $wpdb->prefix . 'sbha_customers';
@@ -1249,6 +1433,7 @@ class SBHA_Ajax {
         ));
         
         $account_created = false;
+        $has_authenticated_session = !empty($this->get_customer());
         
         if ($existing) {
             $customer_id = $existing->id;
@@ -1266,27 +1451,35 @@ class SBHA_Ajax {
             }
             $wpdb->update($table, $update_data, array('id' => $customer_id));
         } else {
-            // Create new customer
-            $parts = explode(' ', $name, 2);
-            $new_password = $password ?: wp_generate_password(8);
-            
-            $wpdb->insert($table, array(
-                'first_name' => $parts[0],
-                'last_name' => $parts[1] ?? '',
-                'email' => $email,
-                'cell_number' => $phone,
-                'whatsapp_number' => $phone,
-                'business_name' => '',
-                'password' => password_hash($new_password, PASSWORD_DEFAULT),
-                'status' => 'active'
-            ));
-            $customer_id = $wpdb->insert_id;
-            $account_created = true;
+            // Create new customer profile. If no password is provided, treat as guest profile.
+            if (empty($password)) {
+                $customer_id = $this->resolve_or_create_guest_customer($name, $phone, $email_input);
+                if (!$customer_id) {
+                    wp_send_json_error('Unable to create customer profile.');
+                }
+            } else {
+                $parts = explode(' ', $name, 2);
+                $wpdb->insert($table, array(
+                    'first_name' => $parts[0],
+                    'last_name' => $parts[1] ?? '',
+                    'email' => $email,
+                    'cell_number' => $phone,
+                    'whatsapp_number' => $phone,
+                    'business_name' => '',
+                    'password' => password_hash($password, PASSWORD_DEFAULT),
+                    'status' => 'active'
+                ));
+                $customer_id = $wpdb->insert_id;
+                $account_created = true;
+            }
         }
 
-        // Ensure customer session cookie exists for quote dashboard visibility.
-        $token = $this->create_session($customer_id);
-        setcookie('sbha_token', $token, time() + (30 * 24 * 60 * 60), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+        // Only auto-login if customer already had a valid session or supplied a password.
+        $token = '';
+        if ($has_authenticated_session || !empty($password)) {
+            $token = $this->create_session($customer_id);
+            setcookie('sbha_token', $token, time() + (30 * 24 * 60 * 60), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+        }
 
         // Fallback transcript from saved history if frontend did not send one.
         if (empty($transcript)) {
@@ -1408,7 +1601,7 @@ class SBHA_Ajax {
         $wpdb->insert($wpdb->prefix . 'sbha_quotes', array(
             'quote_number' => $quote_number,
             'customer_id' => $customer_id,
-            'email' => $email_input,
+            'email' => $email_input ?: $email,
             'phone' => $phone,
             'company' => '',
             'items' => json_encode($items_summary),
@@ -1431,7 +1624,8 @@ class SBHA_Ajax {
         // Email admin
         $admin_email = get_option('sbha_business_email', get_option('admin_email'));
         
-        $email_body = "New Quote Request: {$quote_number}\n\n";
+        $admin_document_label = $requested_document === 'invoice' ? 'Invoice Request' : 'Quote Request';
+        $email_body = "New {$admin_document_label}: {$quote_number}\n\n";
         $email_body .= "Customer: {$name}\n";
         $email_body .= "Email: " . (!empty($email_input) ? $email_input : '-') . "\n";
         $email_body .= "Phone: {$phone}\n";
@@ -1455,14 +1649,20 @@ class SBHA_Ajax {
         $email_body .= "\n💰 ESTIMATED TOTAL: R" . number_format($total, 2) . "\n";
         $email_body .= "\n--- CHAT TRANSCRIPT ---\n" . $transcript;
 
-        wp_mail($admin_email, "New Quote: {$quote_number} - {$name}", $email_body);
+        wp_mail($admin_email, "New {$admin_document_label}: {$quote_number} - {$name}", $email_body);
 
         // Email customer
         $customer_email = "Hi {$name},\n\n";
-        $customer_email .= "Thank you for your quote request!\n\n";
-        $customer_email .= "Quote Reference: {$quote_number}\n";
+        $customer_email .= $requested_document === 'invoice'
+            ? "Thank you for your order! Your invoice has been created.\n\n"
+            : "Thank you for your quote request!\n\n";
+        $customer_email .= ($requested_document === 'invoice' ? "Invoice Reference: " : "Quote Reference: ") . "{$quote_number}\n";
         $customer_email .= "Estimated Total: R" . number_format($total, 2) . "\n\n";
-        $customer_email .= "We'll review your request and send you a formal quote shortly.\n\n";
+        if ($requested_document === 'invoice') {
+            $customer_email .= "Please use this reference when making payment and upload your proof in the portal.\n\n";
+        } else {
+            $customer_email .= "We'll review your request and send you a formal quote shortly.\n\n";
+        }
         $customer_email .= "If you have any questions, feel free to WhatsApp us at " . get_option('sbha_whatsapp', '068 147 4232') . "\n\n";
         $customer_email .= "Thank you for choosing Switch Graphics!\n\n";
         $customer_email .= "---\n";
@@ -1472,15 +1672,21 @@ class SBHA_Ajax {
         $customer_email .= "www.switchgraphics.co.za";
 
         if (!empty($email_input)) {
-            wp_mail($email_input, "Quote Request Received - {$quote_number}", $customer_email);
+            $customer_subject = $requested_document === 'invoice'
+                ? "Invoice Created - {$quote_number}"
+                : "Quote Request Received - {$quote_number}";
+            wp_mail($email_input, $customer_subject, $customer_email);
         }
 
         wp_send_json_success(array(
-            'message' => 'Quote submitted successfully!',
+            'message' => $requested_document === 'invoice' ? 'Invoice created successfully!' : 'Quote submitted successfully!',
             'quote_number' => $quote_number,
+            'invoice_number' => $requested_document === 'invoice' ? $quote_number : '',
             'quote_id' => $quote_id,
             'account_created' => $account_created,
-            'token' => $token
+            'token' => $token,
+            'document_type' => $requested_document,
+            'document_number' => $quote_number
         ));
     }
 }

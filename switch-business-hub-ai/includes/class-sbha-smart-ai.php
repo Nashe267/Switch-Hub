@@ -3,7 +3,7 @@
  * Smart AI - guided quote assistant for print/signage/design.
  *
  * @package SwitchBusinessHub
- * @version 2.1.0
+ * @version 2.2.0
  */
 
 if (!defined('ABSPATH')) {
@@ -38,6 +38,10 @@ class SBHA_Smart_AI {
                 $ctx,
                 $this->default_quick_buttons()
             );
+        }
+
+        if (preg_match('/\bquote\b/i', $msg) && !preg_match('/\binvoice\b/i', $msg)) {
+            $ctx['force_quote'] = true;
         }
 
         if ($this->is_reset_command($msg)) {
@@ -82,7 +86,8 @@ class SBHA_Smart_AI {
             'event_date' => '',
             'delivery_location' => '',
             'special_notes' => '',
-            'has_custom_item' => false
+            'has_custom_item' => false,
+            'force_quote' => false
         );
 
         $ctx = wp_parse_args(is_array($context) ? $context : array(), $defaults);
@@ -132,7 +137,7 @@ class SBHA_Smart_AI {
 
             $help = "I could not match that to an exact catalog item yet. I can still estimate it as a custom job at R" .
                 number_format($this->custom_hourly_rate, 0) . "/hour and include it in your quote.";
-            $help .= "\n(Indexed price references include Vistaprinters, Printulu, TheMediaMafia and ImpressWeb sources in your catalog.)";
+            $help .= "\n(Indexed price references include Vistaprinters, Printulu, Printability Press, Emdee Branding, Display Mania, TheMediaMafia and ImpressWeb.)";
 
             if (!empty($suggestions)) {
                 $help .= "\n\nClosest catalog matches:\n";
@@ -229,6 +234,24 @@ class SBHA_Smart_AI {
         $ctx['current']['variant_name'] = $variant['name'] ?? '';
         $ctx['current']['variant_sku'] = $variant['sku'] ?? '';
         $ctx['current']['unit_price'] = floatval($variant['price'] ?? 0);
+
+        // Variants like "100 Cards" already include a built-in quantity pack.
+        // Default to one pack so totals stay accurate and avoid 100x multiplication mistakes.
+        if ($this->is_pack_variant($ctx['current']['variant_name'])) {
+            $ctx['current']['quantity'] = 1;
+            $ctx['state'] = 'pick_design';
+            return $this->format_response(
+                "Selected: **{$ctx['current']['variant_name']}** at R" .
+                number_format($ctx['current']['unit_price'], 2) .
+                " per pack.\nI will use 1 pack by default (you can add more packs later). Do you need design service or will you provide your own file?",
+                $ctx,
+                array(
+                    array('text' => 'Need design service', 'value' => 'need design'),
+                    array('text' => 'I have my own file', 'value' => 'own file')
+                )
+            );
+        }
+
         $ctx['state'] = 'pick_quantity';
 
         return $this->format_response(
@@ -513,10 +536,26 @@ class SBHA_Smart_AI {
 
         $ctx['state'] = 'done';
 
-        $message = "**Quote estimate summary**\n\n" .
+        $catalog_only = !$ctx['has_custom_item'];
+        foreach ($ctx['cart'] as $item) {
+            if (empty($item['product_key']) || ($item['product_name'] ?? '') === 'Custom Item') {
+                $catalog_only = false;
+                break;
+            }
+        }
+
+        $preferred_document = (!empty($ctx['force_quote']) || !$catalog_only) ? 'quote' : 'invoice';
+
+        $message = "**Order estimate summary**\n\n" .
             implode("\n", $summary_lines) .
             "\n\n**Estimated total: R" . number_format($total, 2) . "**\n" .
             "This is an estimate from current catalog pricing (with markup and service assumptions). Final amount is confirmed after file/artwork review.";
+
+        if ($preferred_document === 'invoice') {
+            $message .= "\n\nAll selected items are in the catalog, so the default action is **Create Invoice**.";
+        } else {
+            $message .= "\n\nThis request includes custom/unknown work, so the default action is **Request Quote**.";
+        }
 
         $quote_data = array(
             'items' => $ctx['cart'],
@@ -527,7 +566,8 @@ class SBHA_Smart_AI {
             'delivery_location' => implode(' | ', array_unique($delivery_locations)),
             'event_type' => $ctx['event_type'] ?? '',
             'event_date' => $ctx['event_date'] ?? '',
-            'special_notes' => $ctx['special_notes'] ?? ''
+            'special_notes' => $ctx['special_notes'] ?? '',
+            'preferred_document' => $preferred_document
         );
 
         return $this->format_response($message, $ctx, array(), true, $quote_data);
@@ -677,6 +717,14 @@ class SBHA_Smart_AI {
         return $hours;
     }
 
+    private function is_pack_variant($variant_name) {
+        if (!is_string($variant_name) || $variant_name === '') {
+            return false;
+        }
+
+        return (bool) preg_match('/^\s*\d+\s*(cards?|flyers?|posters?|stickers?|mugs?|shirts?|booklets?|sets?)/i', $variant_name);
+    }
+
     private function load_fee_defaults() {
         if (!empty($this->products['design_service']['variations'][0]['price'])) {
             $this->design_fee = floatval($this->products['design_service']['variations'][0]['price']);
@@ -725,6 +773,12 @@ class SBHA_Smart_AI {
             'social media' => 'design_social',
             'website' => 'website_starter',
             'web design' => 'website_business',
+            'booklet' => 'printability_booklets',
+            'x-banner' => 'displaymania_x_banners',
+            'backdrop' => 'displaymania_backdrops',
+            't shirt' => 'emdee_branded_tshirts',
+            't-shirt' => 'emdee_branded_tshirts',
+            'corporate gift' => 'emdee_corp_sets',
             'custom job' => 'custom_jobs_hourly',
             'delivery' => 'delivery'
         );

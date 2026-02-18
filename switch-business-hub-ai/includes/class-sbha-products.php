@@ -8,7 +8,7 @@
  * - Normalized 75% markup baseline where cost exists
  *
  * @package SwitchBusinessHub
- * @version 2.1.0
+ * @version 2.2.0
  */
 
 if (!defined('ABSPATH')) exit;
@@ -481,6 +481,83 @@ class SBHA_Products {
                 ),
             ),
 
+            // ========== ADDITIONAL SUPPLIERS ==========
+            'printability_booklets' => array(
+                'name' => 'Saddle-Stitched Booklets',
+                'category' => 'printing',
+                'description' => '📘 Multi-page booklet printing from Printability Press.',
+                'source' => 'Printability Press',
+                'source_url' => 'https://www.printabilitypress.co.za/',
+                'supplier_links' => array('https://www.printabilitypress.co.za/'),
+                'variations' => array(
+                    array('name' => 'A5 Booklet 8pp (100)', 'cost' => 980, 'price' => 1715, 'sku' => 'PP-BKT-A5-100'),
+                    array('name' => 'A5 Booklet 12pp (100)', 'cost' => 1320, 'price' => 2310, 'sku' => 'PP-BKT-A5-12-100'),
+                    array('name' => 'A4 Booklet 8pp (100)', 'cost' => 1680, 'price' => 2940, 'sku' => 'PP-BKT-A4-100'),
+                ),
+            ),
+            'printability_posters_large' => array(
+                'name' => 'Large Format Posters',
+                'category' => 'posters',
+                'description' => '🖼️ High-impact indoor/outdoor posters from Printability Press.',
+                'source' => 'Printability Press',
+                'source_url' => 'https://www.printabilitypress.co.za/',
+                'supplier_links' => array('https://www.printabilitypress.co.za/'),
+                'variations' => array(
+                    array('name' => 'A1 Poster 200gsm', 'cost' => 120, 'price' => 210, 'sku' => 'PP-POS-A1'),
+                    array('name' => 'A0 Poster 200gsm', 'cost' => 190, 'price' => 333, 'sku' => 'PP-POS-A0'),
+                    array('name' => 'A0 Laminated Poster', 'cost' => 260, 'price' => 455, 'sku' => 'PP-POS-A0-LAM'),
+                ),
+            ),
+            'emdee_branded_tshirts' => array(
+                'name' => 'Branded T-Shirts',
+                'category' => 'apparel',
+                'description' => '👕 Promotional and staff t-shirts via Emdee Branding.',
+                'source' => 'Emdee Branding',
+                'source_url' => 'https://emdeebranding.co.za/',
+                'supplier_links' => array('https://emdeebranding.co.za/'),
+                'variations' => array(
+                    array('name' => '10x Branded T-Shirts', 'cost' => 850, 'price' => 1488, 'sku' => 'EMD-TS-10'),
+                    array('name' => '25x Branded T-Shirts', 'cost' => 1980, 'price' => 3465, 'sku' => 'EMD-TS-25'),
+                    array('name' => '50x Branded T-Shirts', 'cost' => 3720, 'price' => 6510, 'sku' => 'EMD-TS-50'),
+                ),
+            ),
+            'emdee_corp_sets' => array(
+                'name' => 'Corporate Gifting Sets',
+                'category' => 'apparel',
+                'description' => '🎁 Branded promo kits and gifting sets from Emdee Branding.',
+                'source' => 'Emdee Branding',
+                'source_url' => 'https://emdeebranding.co.za/',
+                'supplier_links' => array('https://emdeebranding.co.za/'),
+                'variations' => array(
+                    array('name' => '25x Pen + Notebook Sets', 'cost' => 1250, 'price' => 2188, 'sku' => 'EMD-GIFT-25'),
+                    array('name' => '50x Pen + Notebook Sets', 'cost' => 2380, 'price' => 4165, 'sku' => 'EMD-GIFT-50'),
+                ),
+            ),
+            'displaymania_x_banners' => array(
+                'name' => 'X-Banner Stands',
+                'category' => 'display',
+                'description' => '🧷 Portable x-banner display systems from Display Mania.',
+                'source' => 'Display Mania',
+                'source_url' => 'https://displaymania.co.za/',
+                'supplier_links' => array('https://displaymania.co.za/'),
+                'variations' => array(
+                    array('name' => '600x1600mm X-Banner', 'cost' => 340, 'price' => 595, 'sku' => 'DM-XB-60'),
+                    array('name' => '800x1800mm X-Banner', 'cost' => 470, 'price' => 823, 'sku' => 'DM-XB-80'),
+                ),
+            ),
+            'displaymania_backdrops' => array(
+                'name' => 'Media Backdrop Stands',
+                'category' => 'display',
+                'description' => '🎬 Event media wall backdrops and displays from Display Mania.',
+                'source' => 'Display Mania',
+                'source_url' => 'https://displaymania.co.za/',
+                'supplier_links' => array('https://displaymania.co.za/'),
+                'variations' => array(
+                    array('name' => '2.4m Curved Backdrop', 'cost' => 1850, 'price' => 3238, 'sku' => 'DM-BD-24'),
+                    array('name' => '3m Straight Backdrop', 'cost' => 2450, 'price' => 4288, 'sku' => 'DM-BD-30'),
+                ),
+            ),
+
             // ========== CORE SERVICES ==========
             'design_service' => array(
                 'name' => 'Design Service',
@@ -562,6 +639,8 @@ class SBHA_Products {
             'books' => array('name' => 'Books & NCR', 'emoji' => '📚', 'icon' => '📚'),
             'vehicle' => array('name' => 'Vehicle', 'emoji' => '🚗', 'icon' => '🚗'),
             'events' => array('name' => 'Events', 'emoji' => '⛺', 'icon' => '⛺'),
+            'apparel' => array('name' => 'Apparel', 'emoji' => '👕', 'icon' => '👕'),
+            'display' => array('name' => 'Display Systems', 'emoji' => '🖼️', 'icon' => '🖼️'),
             'special' => array('name' => 'Special', 'emoji' => '✨', 'icon' => '✨'),
             'services' => array('name' => 'Services', 'emoji' => '⚙️', 'icon' => '⚙️'),
         );
@@ -608,15 +687,15 @@ class SBHA_Products {
      */
     public static function get_product_image($key, $product = array()) {
         if (!empty($product['image_url'])) {
-            return esc_url($product['image_url']);
+            return (string) $product['image_url'];
         }
 
         $stored = get_option('sbha_product_image_' . $key, '');
         if (!empty($stored)) {
-            return esc_url($stored);
+            return (string) $stored;
         }
 
-        return '';
+        return self::build_generated_catalog_image($key, $product);
     }
 
     /**
@@ -684,5 +763,61 @@ class SBHA_Products {
         }
 
         return $base . '-' . $suffix;
+    }
+
+    /**
+     * Build generated in-memory SVG mockup for products with no custom image.
+     * This creates a premium "stock" look while keeping branding visible.
+     */
+    private static function build_generated_catalog_image($key, $product) {
+        $title = $product['name'] ?? ucwords(str_replace('_', ' ', $key));
+        $category = strtolower($product['category'] ?? 'services');
+        $palette = self::get_category_palette($category);
+
+        $title = substr((string) $title, 0, 34);
+        $subtitle = 'Switch Graphics';
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640">'
+            . '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">'
+            . '<stop offset="0%" stop-color="' . $palette['bg1'] . '"/>'
+            . '<stop offset="100%" stop-color="' . $palette['bg2'] . '"/>'
+            . '</linearGradient>'
+            . '<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">'
+            . '<feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#000" flood-opacity="0.35"/>'
+            . '</filter></defs>'
+            . '<rect width="960" height="640" fill="url(#bg)"/>'
+            . '<rect x="72" y="72" width="816" height="496" rx="28" fill="rgba(10,10,10,0.5)" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>'
+            . '<rect x="116" y="126" width="728" height="280" rx="20" fill="' . $palette['panel'] . '" filter="url(#shadow)"/>'
+            . '<circle cx="170" cy="182" r="18" fill="#FF6600"/>'
+            . '<circle cx="206" cy="182" r="11" fill="#FDBA2D"/>'
+            . '<rect x="150" y="238" width="660" height="16" rx="8" fill="rgba(255,255,255,0.18)"/>'
+            . '<rect x="150" y="268" width="510" height="12" rx="6" fill="rgba(255,255,255,0.14)"/>'
+            . '<rect x="150" y="468" width="256" height="60" rx="12" fill="#FF6600"/>'
+            . '<text x="170" y="506" font-size="30" font-weight="700" fill="#fff">View Options</text>'
+            . '<text x="150" y="352" font-size="54" font-weight="800" fill="#ffffff" font-family="Inter,Arial,sans-serif">' . self::svg_escape($title) . '</text>'
+            . '<text x="150" y="392" font-size="24" fill="rgba(255,255,255,0.78)" font-family="Inter,Arial,sans-serif">' . self::svg_escape($subtitle) . '</text>'
+            . '</svg>';
+
+        return 'data:image/svg+xml;charset=utf-8,' . rawurlencode($svg);
+    }
+
+    private static function get_category_palette($category) {
+        $palettes = array(
+            'design' => array('bg1' => '#13070f', 'bg2' => '#2e0f18', 'panel' => '#371327'),
+            'websites' => array('bg1' => '#040d18', 'bg2' => '#12253f', 'panel' => '#163257'),
+            'business_cards' => array('bg1' => '#121212', 'bg2' => '#2a2a2a', 'panel' => '#1f1f1f'),
+            'signage' => array('bg1' => '#0f0c04', 'bg2' => '#2f220a', 'panel' => '#47310d'),
+            'wedding' => array('bg1' => '#1b1018', 'bg2' => '#3b1c31', 'panel' => '#4f2341'),
+            'apparel' => array('bg1' => '#0a1015', 'bg2' => '#183046', 'panel' => '#1f3b58'),
+            'display' => array('bg1' => '#0d0f12', 'bg2' => '#1d2c39', 'panel' => '#24384a'),
+            'printing' => array('bg1' => '#0f1318', 'bg2' => '#243040', 'panel' => '#2d3e52'),
+            'default' => array('bg1' => '#0f0f0f', 'bg2' => '#222', 'panel' => '#2a2a2a')
+        );
+
+        return $palettes[$category] ?? $palettes['default'];
+    }
+
+    private static function svg_escape($text) {
+        return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
     }
 }

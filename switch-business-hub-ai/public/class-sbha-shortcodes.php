@@ -4,7 +4,7 @@
  * PREMIUM DARK THEME - APP-LIKE EXPERIENCE
  * 
  * @package SwitchBusinessHub
- * @version 2.1.0
+ * @version 2.2.0
  */
 
 if (!defined('ABSPATH')) exit;
@@ -36,6 +36,8 @@ class SBHA_Shortcodes {
         
         $customer_orders = array();
         $notifications = array();
+        $is_super_admin = false;
+        $admin_quotes = array();
         if ($logged_in) {
             $customer_orders = $wpdb->get_results($wpdb->prepare(
                 "SELECT * FROM {$wpdb->prefix}sbha_quotes WHERE customer_id = %d ORDER BY created_at DESC LIMIT 20",
@@ -48,6 +50,16 @@ class SBHA_Shortcodes {
                 } elseif ($o->status === 'processing') {
                     $notifications[] = array('type' => 'info', 'msg' => "{$o->quote_number} is being processed", 'time' => $o->updated_at ?? $o->created_at);
                 }
+            }
+
+            $super_admin_email = strtolower((string) get_option('sbha_super_admin_email', 'tinashe@switchgraphics.co.za'));
+            $super_admin_phone = preg_replace('/[^0-9]/', '', (string) get_option('sbha_super_admin_phone', '0681474232'));
+            $customer_email = strtolower((string) ($customer['email'] ?? ''));
+            $customer_phone = preg_replace('/[^0-9]/', '', (string) ($customer['cell_number'] ?? $customer['whatsapp_number'] ?? ''));
+            $is_super_admin = (!empty($super_admin_email) && $customer_email === $super_admin_email) || (!empty($super_admin_phone) && $customer_phone === $super_admin_phone);
+
+            if ($is_super_admin) {
+                $admin_quotes = $wpdb->get_results("SELECT q.*, c.first_name, c.last_name, c.cell_number FROM {$wpdb->prefix}sbha_quotes q LEFT JOIN {$wpdb->prefix}sbha_customers c ON q.customer_id=c.id ORDER BY q.created_at DESC LIMIT 30");
             }
         }
         
@@ -73,9 +85,11 @@ class SBHA_Shortcodes {
         ob_start();
         ?>
         <style>
-        :root{--bg:#0f0f0f;--card:#1a1a1a;--card2:#242424;--primary:#FF6600;--primary-glow:rgba(255,102,0,0.3);--text:#ffffff;--text2:#b0b0b0;--border:#333;--success:#00C853;--info:#2196F3;--warning:#FFC107;--danger:#FF5252;--radius:16px;--shadow:0 4px 20px rgba(0,0,0,0.4)}
-        .sgp{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);min-height:100vh;color:var(--text);padding-bottom:80px}
+        :root{--bg:#000000;--card:#0f0f0f;--card2:#171717;--primary:#FF6600;--primary-glow:rgba(255,102,0,0.3);--text:#ffffff;--text2:#b0b0b0;--border:#2d2d2d;--success:#00C853;--info:#2196F3;--warning:#FFC107;--danger:#FF5252;--radius:16px;--shadow:0 6px 26px rgba(0,0,0,0.45)}
+        html,body{margin:0!important;padding:0!important;background:#000!important}
+        .sgp{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);min-height:100dvh;color:var(--text);padding-bottom:92px;width:100vw;max-width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw}
         .sgp *{box-sizing:border-box;margin:0;padding:0}
+        .site-main,.entry-content,.wp-site-blocks,.is-layout-constrained{max-width:100%!important;padding-left:0!important;padding-right:0!important}
         
         /* Header */
         .sgp-header{background:linear-gradient(135deg,#1a1a1a,#2a2a2a);padding:20px;border-bottom:1px solid var(--border)}
@@ -128,7 +142,7 @@ class SBHA_Shortcodes {
         .sgp-btn-block{width:100%;margin-top:12px}
         
         /* Navigation */
-        .sgp-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 12px;z-index:100}
+        .sgp-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,15,0.96);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 12px;z-index:100}
         .sgp-nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--text2);font-size:10px;cursor:pointer;padding:8px 16px;border-radius:12px;transition:all 0.2s}
         .sgp-nav-btn svg{width:22px;height:22px}
         .sgp-nav-btn.active{color:var(--primary);background:rgba(255,102,0,0.15)}
@@ -291,39 +305,6 @@ class SBHA_Shortcodes {
             </div>
             <?php endif; ?>
 
-            <!-- AI Chat -->
-            <div class="sgp-ai">
-                <div class="sgp-ai-header">
-                    <div class="sgp-ai-avatar">🤖</div>
-                    <div>
-                        <h3>Get a Custom Quote</h3>
-                        <p>AI-powered instant pricing</p>
-                    </div>
-                </div>
-                <div class="sgp-chat" id="sgpChat">
-                    <div class="sgp-msg sgp-msg-ai">
-                        👋 Hi! I will guide you step-by-step and build your quote from your answers (size, material, design/file, delivery, deadline). What do you need?
-                        <div class="sgp-quick">
-                            <button class="sgp-quick-btn" onclick="sgpSend('wedding welcome board')">💒 Welcome Board</button>
-                            <button class="sgp-quick-btn" onclick="sgpSend('business cards')">💳 Cards</button>
-                            <button class="sgp-quick-btn" onclick="sgpSend('flyers')">📄 Flyers</button>
-                            <button class="sgp-quick-btn" onclick="sgpSend('custom job')">🛠️ Custom Job</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="sgp-ai-input">
-                    <input type="text" id="sgpInput" placeholder="Describe what you need...">
-                    <button onclick="sgpSendInput()">➤</button>
-                </div>
-            </div>
-
-            <!-- WhatsApp Direct -->
-            <div class="sgp-wa-box">
-                <h4>📝 Prefer to message directly?</h4>
-                <textarea id="waText" placeholder="Describe what you need..."></textarea>
-                <button class="sgp-btn sgp-btn-whatsapp sgp-btn-block" onclick="sgpSendWA()">💬 Send to WhatsApp</button>
-            </div>
-
             <!-- PANELS -->
             
             <?php if ($logged_in): ?>
@@ -368,8 +349,43 @@ class SBHA_Shortcodes {
             </div>
             <?php endif; ?>
 
+            <!-- AI Assistant -->
+            <div class="sgp-panel <?php echo !$logged_in ? 'active' : ''; ?>" id="panelAI">
+                <h2 class="sgp-panel-title">🤖 AI Order Assistant</h2>
+                <div class="sgp-ai" style="margin:0 0 14px">
+                    <div class="sgp-ai-header">
+                        <div class="sgp-ai-avatar">🤖</div>
+                        <div>
+                            <h3>Smart Print & Design Assistant</h3>
+                            <p>Guided options + estimated pricing + invoice/quote flow</p>
+                        </div>
+                    </div>
+                    <div class="sgp-chat" id="sgpChat">
+                        <div class="sgp-msg sgp-msg-ai">
+                            👋 Hi! I guide step-by-step and prepare your order automatically. Tell me what you need.
+                            <div class="sgp-quick">
+                                <button class="sgp-quick-btn" onclick="sgpSend('wedding welcome board')">💒 Welcome Board</button>
+                                <button class="sgp-quick-btn" onclick="sgpSend('business cards')">💳 Cards</button>
+                                <button class="sgp-quick-btn" onclick="sgpSend('flyers')">📄 Flyers</button>
+                                <button class="sgp-quick-btn" onclick="sgpSend('custom job')">🛠️ Custom Job</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sgp-ai-input">
+                        <input type="text" id="sgpInput" placeholder="Describe what you need...">
+                        <button onclick="sgpSendInput()">➤</button>
+                    </div>
+                </div>
+
+                <div class="sgp-wa-box" style="margin:0">
+                    <h4>📝 Prefer to message directly?</h4>
+                    <textarea id="waText" placeholder="Describe what you need..."></textarea>
+                    <button class="sgp-btn sgp-btn-whatsapp sgp-btn-block" onclick="sgpSendWA()">💬 Send to WhatsApp</button>
+                </div>
+            </div>
+
             <!-- Shop -->
-            <div class="sgp-panel <?php echo !$logged_in ? 'active' : ''; ?>" id="panelShop">
+            <div class="sgp-panel" id="panelShop">
                 <h2 class="sgp-panel-title">🛍️ Shop</h2>
                 
                 <div class="sgp-search">
@@ -392,7 +408,7 @@ class SBHA_Shortcodes {
                     <div class="sgp-product" data-cat="<?php echo esc_attr($product['category']); ?>" data-name="<?php echo esc_attr(strtolower($product['name'].' '.$product['description'])); ?>" onclick="sgpShowProduct('<?php echo esc_js($key); ?>')">
                         <div class="sgp-product-img">
                             <?php if (!empty($image_url)): ?>
-                                <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($product['name']); ?>">
+                                <img src="<?php echo esc_attr($image_url); ?>" alt="<?php echo esc_attr($product['name']); ?>">
                             <?php else: ?>
                                 <?php echo esc_html($icon); ?>
                             <?php endif; ?>
@@ -486,15 +502,66 @@ class SBHA_Shortcodes {
                 <button class="sgp-btn sgp-btn-whatsapp sgp-btn-block" onclick="sgpRequestPayLink()">💳 Request Online Payment Link</button>
             </div>
 
+            <?php if ($is_super_admin): ?>
+            <div class="sgp-panel" id="panelAdmin">
+                <h2 class="sgp-panel-title">🛠️ Super Admin Dashboard</h2>
+                <div class="sgp-card">
+                    <div class="sgp-card-title">Recent Quotes & Invoices</div>
+                    <?php if (!empty($admin_quotes)): ?>
+                        <?php foreach ($admin_quotes as $aq): ?>
+                            <div class="sgp-order">
+                                <div>
+                                    <div class="sgp-order-num"><?php echo esc_html($aq->quote_number); ?></div>
+                                    <div class="sgp-order-meta"><?php echo esc_html(trim(($aq->first_name ?? '') . ' ' . ($aq->last_name ?? ''))); ?> • <?php echo esc_html($aq->cell_number ?? '-'); ?> • R<?php echo number_format((float) $aq->total, 2); ?></div>
+                                </div>
+                                <div style="text-align:right;min-width:130px">
+                                    <select id="adm_st_<?php echo (int) $aq->id; ?>" style="width:120px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px">
+                                        <?php foreach (array('pending','reviewed','quoted','accepted','rejected','expired','processing','ready','completed','cancelled') as $st): ?>
+                                        <option value="<?php echo esc_attr($st); ?>" <?php selected($aq->status, $st); ?>><?php echo esc_html(ucfirst($st)); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <button class="sgp-btn sgp-btn-primary sgp-btn-sm" style="margin-top:6px" onclick="sgpAdminUpdateStatus(<?php echo (int) $aq->id; ?>)">Save</button>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p style="color:var(--text2)">No records yet.</p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="sgp-card">
+                    <div class="sgp-card-title">Catalog Quick Price Editor</div>
+                    <div class="sgp-form-group">
+                        <label>Select Product</label>
+                        <select id="admProductSelect" onchange="sgpAdminLoadVariations()"></select>
+                    </div>
+                    <div class="sgp-form-group">
+                        <label>Select Variation</label>
+                        <select id="admVariationSelect"></select>
+                    </div>
+                    <div class="sgp-form-group">
+                        <label>New Selling Price (R)</label>
+                        <input type="number" step="0.01" id="admVariationPrice" placeholder="0.00">
+                    </div>
+                    <button class="sgp-btn sgp-btn-success sgp-btn-block" onclick="sgpAdminSaveVariation()">💾 Save Price</button>
+                    <p style="font-size:11px;color:var(--text2);margin-top:8px">Updates are applied directly inside the plugin catalog without opening WordPress admin screens.</p>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Nav -->
             <nav class="sgp-nav">
                 <?php if ($logged_in): ?>
                 <button class="sgp-nav-btn active" onclick="sgpNav('panelHome',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
                 <?php endif; ?>
-                <button class="sgp-nav-btn <?php echo !$logged_in?'active':''; ?>" onclick="sgpNav('panelShop',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>Shop</button>
+                <button class="sgp-nav-btn <?php echo !$logged_in?'active':''; ?>" onclick="sgpNav('panelAI',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1.5-3H4.5A2.5 2.5 0 012 14.5v-9A2.5 2.5 0 014.5 3h15A2.5 2.5 0 0122 5.5v9a2.5 2.5 0 01-2.5 2.5h-3L15 20l-.75-3H9.75z"/></svg>AI</button>
+                <button class="sgp-nav-btn" onclick="sgpNav('panelShop',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>Shop</button>
                 <button class="sgp-nav-btn" onclick="sgpNav('panelPortfolio',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Portfolio</button>
                 <button class="sgp-nav-btn" onclick="sgpNav('panelTrack',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Track</button>
                 <button class="sgp-nav-btn" onclick="sgpNav('panelContact',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>Contact</button>
+                <?php if ($is_super_admin): ?>
+                <button class="sgp-nav-btn" onclick="sgpNav('panelAdmin',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927C11.469 1.648 13.53 1.648 13.95 2.927l1.034 3.155a1 1 0 00.95.69h3.322c1.345 0 1.904 1.723.817 2.513l-2.688 1.953a1 1 0 00-.364 1.118l1.034 3.154c.42 1.28-1.243 2.326-2.33 1.537l-2.688-1.953a1 1 0 00-1.175 0l-2.688 1.953c-1.087.79-2.75-.257-2.33-1.537l1.034-3.154a1 1 0 00-.364-1.118L3.927 9.285c-1.087-.79-.528-2.513.817-2.513h3.322a1 1 0 00.95-.69l1.034-3.155z"/></svg>Admin</button>
+                <?php endif; ?>
             </nav>
 
             <!-- Notifications Panel -->
@@ -524,7 +591,7 @@ class SBHA_Shortcodes {
             <div class="sgp-modal" id="cartModal"><div class="sgp-modal-content"><div class="sgp-modal-header"><h2>🛒 Cart</h2><button class="sgp-modal-close" onclick="sgpClose('cartModal')">×</button></div><div id="cartBody"></div></div></div>
             <div class="sgp-modal" id="authModal"><div class="sgp-modal-content"><div class="sgp-modal-header"><h2 id="authTitle">Login</h2><button class="sgp-modal-close" onclick="sgpClose('authModal')">×</button></div><div id="authBody"></div></div></div>
             <div class="sgp-modal" id="uploadModal"><div class="sgp-modal-content"><div class="sgp-modal-header"><h2>📤 Upload Proof</h2><button class="sgp-modal-close" onclick="sgpClose('uploadModal')">×</button></div><div id="uploadBody"></div></div></div>
-            <div class="sgp-modal" id="quoteModal"><div class="sgp-modal-content"><div class="sgp-modal-header"><h2>📋 Submit Quote</h2><button class="sgp-modal-close" onclick="sgpClose('quoteModal')">×</button></div><div id="quoteBody"></div></div></div>
+            <div class="sgp-modal" id="quoteModal"><div class="sgp-modal-content"><div class="sgp-modal-header"><h2>📋 Submit Request</h2><button class="sgp-modal-close" onclick="sgpClose('quoteModal')">×</button></div><div id="quoteBody"></div></div></div>
         </div>
 
         <script>
@@ -539,8 +606,20 @@ class SBHA_Shortcodes {
             function loadChatHistory(){if(!isLoggedIn)return;fetch(ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'sbha_get_chat_history',nonce})}).then(r=>r.json()).then(d=>{if(!d.success||!Array.isArray(d.data.history)||!d.data.history.length)return;const alreadyHas=document.querySelectorAll('#sgpChat .sgp-msg').length>1;if(alreadyHas)return;chatHistory=d.data.history;localStorage.setItem('sgp_chat_history',JSON.stringify(chatHistory));chatHistory.forEach(e=>{if(e.role==='user')addMsg(e.text,'user');if(e.role==='ai')addMsg((e.text||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>'),'ai');});}).catch(()=>{});}
             loadChatHistory();
 
+            (function initTabFromHash(){
+                const hash=(window.location.hash||'').replace('#','');
+                if(!hash)return;
+                const panel=document.getElementById(hash);
+                if(!panel)return;
+                const navBtn=[...document.querySelectorAll('.sgp-nav-btn')].find(b=>(b.getAttribute('onclick')||'').includes(`'${hash}'`));
+                document.querySelectorAll('.sgp-panel').forEach(p=>p.classList.remove('active'));
+                document.querySelectorAll('.sgp-nav-btn').forEach(b=>b.classList.remove('active'));
+                panel.classList.add('active');
+                if(navBtn)navBtn.classList.add('active');
+            })();
+
             // Navigation
-            window.sgpNav=(id,btn)=>{document.querySelectorAll('.sgp-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.sgp-nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById(id).classList.add('active');if(btn)btn.classList.add('active');};
+            window.sgpNav=(id,btn)=>{const panel=document.getElementById(id);if(!panel)return;document.querySelectorAll('.sgp-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.sgp-nav-btn').forEach(b=>b.classList.remove('active'));panel.classList.add('active');if(btn)btn.classList.add('active');if(window.history&&window.history.replaceState)window.history.replaceState(null,'',`#${id}`);window.scrollTo({top:0,behavior:'smooth'});};
             window.sgpClose=(id)=>document.getElementById(id).classList.remove('show');
             window.sgpOpen=(id)=>document.getElementById(id).classList.add('show');
             
@@ -564,11 +643,11 @@ class SBHA_Shortcodes {
             function updateCartCount(){document.getElementById('cartCount').textContent=cart.length;}
 
             // Cart
-            window.sgpOpenCart=()=>{if(!cart.length){document.getElementById('cartBody').innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:50px;margin-bottom:16px">🛒</div><p>Your cart is empty</p></div>';sgpOpen('cartModal');return;}let h='',t=0;cart.forEach((i,x)=>{const p=products[i.key],ic=categories[p?.category]?.emoji||'📦',s=(parseFloat(i.price)||0)*(parseInt(i.qty)||1);t+=s;const thumb=i.image?`<img src="${i.image}" alt="" style="width:50px;height:50px;border-radius:12px;object-fit:cover">`:`<div style="width:50px;height:50px;background:var(--card2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">${ic}</div>`;h+=`<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">${thumb}<div style="flex:1"><div style="font-weight:600;font-size:13px">${i.name}</div><div style="font-size:11px;color:var(--text2)">${i.variation} × ${i.qty}${i.sku?` • ${i.sku}`:''}</div><div style="color:var(--primary);font-weight:700;margin-top:4px">R${s.toFixed(2)}</div></div><button onclick="sgpRemove(${x})" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer">×</button></div>`;});h+=`<div style="display:flex;justify-content:space-between;padding:20px 0;font-size:18px;font-weight:700"><span>Total</span><span style="color:var(--primary)">R${t.toFixed(2)}</span></div><div class="sgp-form-group"><label>Upload your design files (optional)</label><input type="file" id="cartFiles" multiple></div><button class="sgp-btn sgp-btn-success sgp-btn-block" onclick="sgpCheckout()">✅ Checkout</button>`;document.getElementById('cartBody').innerHTML=h;sgpOpen('cartModal');};
+            window.sgpOpenCart=()=>{if(!cart.length){document.getElementById('cartBody').innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:50px;margin-bottom:16px">🛒</div><p>Your cart is empty</p></div>';sgpOpen('cartModal');return;}let h='',t=0;cart.forEach((i,x)=>{const p=products[i.key],ic=categories[p?.category]?.emoji||'📦',s=(parseFloat(i.price)||0)*(parseInt(i.qty)||1);t+=s;const thumb=i.image?`<img src="${i.image}" alt="" style="width:50px;height:50px;border-radius:12px;object-fit:cover">`:`<div style="width:50px;height:50px;background:var(--card2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">${ic}</div>`;h+=`<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">${thumb}<div style="flex:1"><div style="font-weight:600;font-size:13px">${i.name}</div><div style="font-size:11px;color:var(--text2)">${i.variation} × ${i.qty}${i.sku?` • ${i.sku}`:''}</div><div style="color:var(--primary);font-weight:700;margin-top:4px">R${s.toFixed(2)}</div></div><button onclick="sgpRemove(${x})" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer">×</button></div>`;});h+=`<div style="display:flex;justify-content:space-between;padding:20px 0;font-size:18px;font-weight:700"><span>Total</span><span style="color:var(--primary)">R${t.toFixed(2)}</span></div>`;if(!isLoggedIn){h+=`<div class="sgp-form-group"><label>Name *</label><input type="text" id="guestName" placeholder="Your full name"></div><div class="sgp-form-group"><label>WhatsApp *</label><input type="tel" id="guestPhone" placeholder="068..."></div><div class="sgp-form-group"><label>Email</label><input type="email" id="guestEmail" placeholder="you@example.com"></div>`;}h+=`<div class="sgp-form-group"><label>Upload your design files (optional)</label><input type="file" id="cartFiles" multiple></div><button class="sgp-btn sgp-btn-success sgp-btn-block" onclick="sgpCheckout()">✅ Checkout</button>`;document.getElementById('cartBody').innerHTML=h;sgpOpen('cartModal');};
             window.sgpRemove=(i)=>{cart.splice(i,1);saveCart();sgpOpenCart();};
 
             // Checkout
-            window.sgpCheckout=()=>{if(!isLoggedIn){sgpClose('cartModal');sgpShowAuth('register');return alert('Please login first');}let t=0;const items=cart.map(i=>{const q=parseInt(i.qty||i.quantity||1);t+=(parseFloat(i.price)||0)*q;return {...i,quantity:q};});const fd=new FormData();fd.append('action','sbha_create_invoice');fd.append('nonce',nonce);fd.append('items',JSON.stringify(items));fd.append('total',t);const files=document.getElementById('cartFiles')?.files||[];for(let i=0;i<files.length;i++){fd.append('order_files[]',files[i]);}fetch(ajax,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{if(d.success){cart=[];saveCart();document.getElementById('cartBody').innerHTML=`<div style="text-align:center;padding:30px"><div style="font-size:60px;margin-bottom:16px">✅</div><h2 style="margin-bottom:8px">Invoice Created!</h2><p style="font-size:24px;color:var(--primary);font-weight:800;margin-bottom:16px">${d.data.invoice_number}</p><p style="color:var(--text2);margin-bottom:20px">Total: R${t.toFixed(2)}</p><div style="background:var(--card2);padding:16px;border-radius:12px;text-align:left;font-size:12px;margin-bottom:20px"><strong>Pay via EFT:</strong><br>FNB • Switch Graphics (Pty) Ltd<br>Acc: 630 842 187 18<br>Ref: ${d.data.invoice_number}</div><button class="sgp-btn sgp-btn-primary sgp-btn-block" onclick="sgpUploadProof(${d.data.order_id},'${d.data.invoice_number}')">📤 Upload Payment Proof</button><button class="sgp-btn sgp-btn-outline sgp-btn-block" onclick="location.reload()">Done</button></div>`;}else alert(d.data||'Error');});};
+            window.sgpCheckout=()=>{let t=0;const items=cart.map(i=>{const q=parseInt(i.qty||i.quantity||1);t+=(parseFloat(i.price)||0)*q;return {...i,quantity:q};});const fd=new FormData();fd.append('action','sbha_create_invoice');fd.append('nonce',nonce);fd.append('items',JSON.stringify(items));fd.append('total',t);if(!isLoggedIn){const gn=(document.getElementById('guestName')?.value||'').trim(),gp=(document.getElementById('guestPhone')?.value||'').trim(),ge=(document.getElementById('guestEmail')?.value||'').trim();if(!gn||!gp)return alert('Please provide guest name and WhatsApp number.');fd.append('guest_name',gn);fd.append('guest_phone',gp);fd.append('guest_email',ge);}const files=document.getElementById('cartFiles')?.files||[];for(let i=0;i<files.length;i++){fd.append('order_files[]',files[i]);}fetch(ajax,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{if(d.success){cart=[];saveCart();document.getElementById('cartBody').innerHTML=`<div style="text-align:center;padding:30px"><div style="font-size:60px;margin-bottom:16px">✅</div><h2 style="margin-bottom:8px">Invoice Created!</h2><p style="font-size:24px;color:var(--primary);font-weight:800;margin-bottom:16px">${d.data.invoice_number}</p><p style="color:var(--text2);margin-bottom:20px">Total: R${t.toFixed(2)}</p><div style="background:var(--card2);padding:16px;border-radius:12px;text-align:left;font-size:12px;margin-bottom:20px"><strong>Pay via EFT:</strong><br>FNB • Switch Graphics (Pty) Ltd<br>Acc: 630 842 187 18<br>Ref: ${d.data.invoice_number}</div>${isLoggedIn?`<button class="sgp-btn sgp-btn-primary sgp-btn-block" onclick="sgpUploadProof(${d.data.order_id},'${d.data.invoice_number}')">📤 Upload Payment Proof</button>`:''}<button class="sgp-btn sgp-btn-outline sgp-btn-block" onclick="location.reload()">Done</button></div>`;}else alert(d.data||'Error');}).catch(()=>alert('Network error, please try again.'));};
 
             // Upload Proof - FIXED FOR MOBILE
             window.sgpUploadProof=(id,num)=>{sgpClose('cartModal');document.getElementById('uploadBody').innerHTML=`<p style="margin-bottom:16px">Invoice: <strong>${num}</strong></p><div class="sgp-upload" onclick="document.getElementById('proofFile').click()"><input type="file" id="proofFile" accept="image/*,.pdf" capture="environment" onchange="sgpFileChosen()"><div class="sgp-upload-icon">📎</div><div class="sgp-upload-text">Tap to upload screenshot or PDF</div><div class="sgp-upload-name" id="proofName"></div></div><input type="hidden" id="proofId" value="${id}"><input type="hidden" id="proofNum" value="${num}"><button class="sgp-btn sgp-btn-success sgp-btn-block" style="margin-top:20px" onclick="sgpSubmitProof()">✅ Submit Proof</button>`;sgpOpen('uploadModal');};
@@ -576,7 +655,7 @@ class SBHA_Shortcodes {
             window.sgpSubmitProof=()=>{const f=document.getElementById('proofFile').files[0],id=document.getElementById('proofId').value,num=document.getElementById('proofNum').value;if(!f)return alert('Select a file');const fd=new FormData();fd.append('action','sbha_upload_payment_proof');fd.append('nonce',nonce);fd.append('order_id',id);fd.append('invoice_number',num);fd.append('payment_proof',f);fetch(ajax,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{if(d.success){document.getElementById('uploadBody').innerHTML=`<div style="text-align:center;padding:30px"><div style="font-size:60px;margin-bottom:16px">✅</div><h2>Uploaded!</h2><p style="color:var(--text2);margin:16px 0">Awaiting verification</p><button class="sgp-btn sgp-btn-primary sgp-btn-block" onclick="location.reload()">Done</button></div>`;}else alert(d.data||'Upload failed');}).catch(e=>alert('Error: '+e.message));};
 
             // Request Pay Link
-            window.sgpRequestPayLink=()=>{if(!isLoggedIn){sgpShowAuth('login');return;}const pending=invoices.filter(i=>i.status==='pending');if(!pending.length)return alert('No pending invoices');let h='<p style="margin-bottom:16px;color:var(--text2)">Select invoice:</p>';pending.forEach(i=>{h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--card2);border-radius:12px;margin-bottom:10px;cursor:pointer" onclick="sgpSendPayReq('${i.quote_number}',${i.total})"><strong>${i.quote_number}</strong><span style="color:var(--primary);font-weight:700">R${parseFloat(i.total).toFixed(2)}</span></div>`;});document.getElementById('quoteBody').innerHTML=h;sgpOpen('quoteModal');};
+            window.sgpRequestPayLink=()=>{if(!isLoggedIn){sgpShowAuth('login');return;}const pending=invoices.filter(i=>i.status==='pending'&&String(i.quote_number||'').startsWith('INV-'));if(!pending.length)return alert('No pending invoices');let h='<p style="margin-bottom:16px;color:var(--text2)">Select invoice:</p>';pending.forEach(i=>{h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--card2);border-radius:12px;margin-bottom:10px;cursor:pointer" onclick="sgpSendPayReq('${i.quote_number}',${i.total})"><strong>${i.quote_number}</strong><span style="color:var(--primary);font-weight:700">R${parseFloat(i.total).toFixed(2)}</span></div>`;});document.getElementById('quoteBody').innerHTML=h;sgpOpen('quoteModal');};
             window.sgpSendPayReq=(n,a)=>{window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(`Hi Switch Graphics! Please send me an online payment link for invoice ${n} (R${parseFloat(a).toFixed(2)}). Thank you!`),'_blank');sgpClose('quoteModal');};
 
             // AI Chat
@@ -586,11 +665,17 @@ class SBHA_Shortcodes {
             function addMsg(c,t,id){const ch=document.getElementById('sgpChat'),d=document.createElement('div');d.className='sgp-msg sgp-msg-'+t;if(id)d.id=id;d.innerHTML=c;ch.appendChild(d);ch.scrollTop=ch.scrollHeight;}
 
             // Quote Form
-            window.sgpShowQuoteForm=(data)=>{data=data||{};let h='<div style="background:rgba(0,200,83,0.1);border:1px solid var(--success);border-radius:12px;padding:16px;margin-bottom:20px">';let t=0;if(data.items)data.items.forEach(i=>{const qty=parseInt(i.quantity||i.qty||1),unit=parseFloat(i.unit_price||i.price||0),design=parseFloat(i.design_fee||0),del=parseFloat(i.delivery_fee||0),s=(unit*qty)+design+del;t+=s;h+=`<div style="padding:8px 0;border-bottom:1px solid rgba(0,200,83,0.2)"><div style="display:flex;justify-content:space-between"><span>${i.product_name||''} ${i.variant_name?`- ${i.variant_name}`:''}</span><span>R${s.toFixed(2)}</span></div><div style="font-size:11px;color:var(--text2)">Qty ${qty}${i.variant_sku?` • SKU ${i.variant_sku}`:''}${design?` • Design +R${design}`:''}${del?` • Delivery +R${del}`:''}</div></div>`;});t=parseFloat(data.estimate_total||t||0);h+=`<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:700;font-size:16px"><span>Estimated Total</span><span>R${t.toFixed(2)}</span></div></div>`;if(data.event_date||data.delivery_location||data.special_notes){h+=`<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">${data.event_date?`Needed by: ${data.event_date}<br>`:''}${data.delivery_location?`Delivery: ${data.delivery_location}<br>`:''}${data.special_notes?`Notes: ${data.special_notes}`:''}</div>`;}if(!isLoggedIn){h+=`<div class="sgp-form-group"><label>Name *</label><input type="text" id="qName"></div><div class="sgp-form-group"><label>WhatsApp *</label><input type="tel" id="qPhone"></div><div class="sgp-form-group"><label>Email *</label><input type="email" id="qEmail"></div><div class="sgp-form-group"><label>Password *</label><input type="password" id="qPass"></div>`;}else{const dn=`${currentCustomer.first_name||''} ${currentCustomer.last_name||''}`.trim();h+=`<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:12px;font-size:12px">Submitting as <strong>${dn||'Client'}</strong>${currentCustomer.cell_number?` • ${currentCustomer.cell_number}`:''}</div>`;}h+=`<div class="sgp-form-group"><label>Upload your file/design brief (optional, multiple files)</label><input type="file" id="qFiles" multiple></div><button class="sgp-btn sgp-btn-success sgp-btn-block" onclick="sgpSubmitQuote()">✅ Submit Quote</button>`;window.quoteData=data;document.getElementById('quoteBody').innerHTML=h;sgpOpen('quoteModal');};
-            window.sgpSubmitQuote=()=>{const defaultName=`${currentCustomer.first_name||''} ${currentCustomer.last_name||''}`.trim(),defaultPhone=currentCustomer.cell_number||currentCustomer.whatsapp_number||'',defaultEmail=currentCustomer.email||'';const name=(document.getElementById('qName')?.value||defaultName||'').trim(),phone=(document.getElementById('qPhone')?.value||defaultPhone||'').trim(),email=(document.getElementById('qEmail')?.value||defaultEmail||'').trim(),pass=(document.getElementById('qPass')?.value||'').trim();if(!name||!phone||(!isLoggedIn&&(!email||!pass)))return alert('Please complete required fields.');const fd=new FormData();fd.append('action','sbha_submit_quote');fd.append('nonce',nonce);fd.append('name',name);fd.append('phone',phone);fd.append('email',email);fd.append('password',pass);fd.append('quote_data',JSON.stringify(window.quoteData||{}));fd.append('transcript',compileTranscript());const files=document.getElementById('qFiles')?.files||[];for(let i=0;i<files.length;i++){fd.append('quote_files[]',files[i]);}fetch(ajax,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{if(d.success){syncChatHistory();document.getElementById('quoteBody').innerHTML=`<div style="text-align:center;padding:30px"><div style="font-size:60px;margin-bottom:16px">✅</div><h2>Quote Submitted!</h2><p style="font-size:24px;color:var(--primary);font-weight:800;margin:16px 0">${d.data.quote_number}</p><p style="color:var(--text2)">We have your full brief and chat transcript. We will review and confirm final pricing.</p><button class="sgp-btn sgp-btn-primary sgp-btn-block" style="margin-top:20px" onclick="location.reload()">Done</button></div>`;}else alert(d.data||'Error');}).catch(()=>alert('Network error, please try again.'));};
+            window.sgpShowQuoteForm=(data)=>{data=data||{};const defaultDoc=(data.preferred_document==='invoice')?'invoice':'quote';window.quoteDocType=defaultDoc;let h='<div style="background:rgba(0,200,83,0.1);border:1px solid var(--success);border-radius:12px;padding:16px;margin-bottom:20px">';let t=0;if(data.items)data.items.forEach(i=>{const qty=parseInt(i.quantity||i.qty||1),unit=parseFloat(i.unit_price||i.price||0),design=parseFloat(i.design_fee||0),del=parseFloat(i.delivery_fee||0),s=(unit*qty)+design+del;t+=s;h+=`<div style="padding:8px 0;border-bottom:1px solid rgba(0,200,83,0.2)"><div style="display:flex;justify-content:space-between"><span>${i.product_name||''} ${i.variant_name?`- ${i.variant_name}`:''}</span><span>R${s.toFixed(2)}</span></div><div style="font-size:11px;color:var(--text2)">Qty ${qty}${i.variant_sku?` • SKU ${i.variant_sku}`:''}${design?` • Design +R${design}`:''}${del?` • Delivery +R${del}`:''}</div></div>`;});t=parseFloat(data.estimate_total||t||0);h+=`<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:700;font-size:16px"><span>Estimated Total</span><span>R${t.toFixed(2)}</span></div></div>`;if(data.event_date||data.delivery_location||data.special_notes){h+=`<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">${data.event_date?`Needed by: ${data.event_date}<br>`:''}${data.delivery_location?`Delivery: ${data.delivery_location}<br>`:''}${data.special_notes?`Notes: ${data.special_notes}`:''}</div>`;}if(!isLoggedIn){h+=`<div class="sgp-form-group"><label>Name *</label><input type="text" id="qName"></div><div class="sgp-form-group"><label>WhatsApp *</label><input type="tel" id="qPhone"></div><div class="sgp-form-group"><label>Email</label><input type="email" id="qEmail"></div><div class="sgp-form-group"><label>Create password (optional, for account)</label><input type="password" id="qPass"></div>`;}else{const dn=`${currentCustomer.first_name||''} ${currentCustomer.last_name||''}`.trim();h+=`<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:12px;font-size:12px">Submitting as <strong>${dn||'Client'}</strong>${currentCustomer.cell_number?` • ${currentCustomer.cell_number}`:''}</div>`;}h+=`<div class="sgp-form-group"><label>Upload your file/design brief (optional, multiple files)</label><input type="file" id="qFiles" multiple></div><div style="display:flex;gap:8px"><button class="sgp-btn ${defaultDoc==='invoice'?'sgp-btn-success':'sgp-btn-outline'}" style="flex:1" onclick="sgpSubmitQuote('invoice')">🧾 Create Invoice</button><button class="sgp-btn ${defaultDoc==='quote'?'sgp-btn-success':'sgp-btn-outline'}" style="flex:1" onclick="sgpSubmitQuote('quote')">📋 Request Quote</button></div>`;window.quoteData=data;document.getElementById('quoteBody').innerHTML=h;sgpOpen('quoteModal');};
+            window.sgpSubmitQuote=(docType='quote')=>{const defaultName=`${currentCustomer.first_name||''} ${currentCustomer.last_name||''}`.trim(),defaultPhone=currentCustomer.cell_number||currentCustomer.whatsapp_number||'',defaultEmail=currentCustomer.email||'';const name=(document.getElementById('qName')?.value||defaultName||'').trim(),phone=(document.getElementById('qPhone')?.value||defaultPhone||'').trim(),email=(document.getElementById('qEmail')?.value||defaultEmail||'').trim(),pass=(document.getElementById('qPass')?.value||'').trim();if(!name||!phone)return alert('Please complete required fields.');const fd=new FormData();fd.append('action','sbha_submit_quote');fd.append('nonce',nonce);fd.append('name',name);fd.append('phone',phone);fd.append('email',email);fd.append('password',pass);fd.append('document_type',docType);fd.append('quote_data',JSON.stringify(window.quoteData||{}));fd.append('transcript',compileTranscript());const files=document.getElementById('qFiles')?.files||[];for(let i=0;i<files.length;i++){fd.append('quote_files[]',files[i]);}fetch(ajax,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{if(d.success){syncChatHistory();const ref=d.data.document_number||d.data.quote_number||'';const heading=docType==='invoice'?'Invoice Created!':'Quote Submitted!';const note=docType==='invoice'?'Please pay using the reference and upload proof if you are logged in.':'We have your full brief and transcript. We will review and confirm final pricing.';document.getElementById('quoteBody').innerHTML=`<div style="text-align:center;padding:30px"><div style="font-size:60px;margin-bottom:16px">✅</div><h2>${heading}</h2><p style="font-size:24px;color:var(--primary);font-weight:800;margin:16px 0">${ref}</p><p style="color:var(--text2)">${note}</p><button class="sgp-btn sgp-btn-primary sgp-btn-block" style="margin-top:20px" onclick="location.reload()">Done</button></div>`;}else alert(d.data||'Error');}).catch(()=>alert('Network error, please try again.'));};
 
             // Track
             window.sgpTrack=()=>{const n=document.getElementById('trackNum').value.trim();if(!n)return alert('Enter invoice number');fetch(ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'sbha_track_order',nonce,invoice:n})}).then(r=>r.json()).then(d=>{if(d.success){const o=d.data||{},status=(o.status||'pending'),st=o.status_label||((status==='pending'&&o.payment_proof)?'Verifying':status.charAt(0).toUpperCase()+status.slice(1)),ref=o.invoice_number||o.quote_number||n,totalRaw=String(o.total||'0').replace(/[^0-9.]/g,''),totalNum=parseFloat(totalRaw||'0');document.getElementById('trackResult').innerHTML=`<div class="sgp-card" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center"><h3>${ref}</h3><span class="sgp-status sgp-status-${status}">${st}</span></div><p style="color:var(--text2);margin-top:8px">Total: R${totalNum.toFixed(2)}</p>${o.description?`<p style="color:var(--text2);margin-top:8px">${o.description}</p>`:''}</div>`;}else document.getElementById('trackResult').innerHTML='<p style="text-align:center;padding:20px;color:var(--text2)">Invoice not found</p>';}).catch(()=>{document.getElementById('trackResult').innerHTML='<p style="text-align:center;padding:20px;color:var(--text2)">Network error, try again.</p>';});};
+
+            // Super Admin
+            window.sgpAdminUpdateStatus=(id)=>{const s=document.getElementById(`adm_st_${id}`);if(!s)return;const status=s.value;fetch(ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'sbha_super_admin_update_quote_status',nonce,quote_id:id,status})}).then(r=>r.json()).then(d=>{if(d.success){alert('Status updated');}else{alert(d.data||'Update failed');}}).catch(()=>alert('Network error'));};
+            window.sgpAdminLoadVariations=()=>{const productSel=document.getElementById('admProductSelect'),variationSel=document.getElementById('admVariationSelect'),priceInput=document.getElementById('admVariationPrice');if(!productSel||!variationSel)return;const key=productSel.value,p=products[key];variationSel.innerHTML='';if(!p||!Array.isArray(p.variations))return;p.variations.forEach((v,idx)=>{const opt=document.createElement('option');opt.value=idx;opt.textContent=`${v.name} (${v.sku||'NO-SKU'})`;opt.dataset.price=v.price;variationSel.appendChild(opt);});if(variationSel.options.length){priceInput.value=variationSel.options[0].dataset.price||'';}variationSel.onchange=()=>{priceInput.value=variationSel.options[variationSel.selectedIndex]?.dataset.price||'';};};
+            window.sgpAdminSaveVariation=()=>{const productSel=document.getElementById('admProductSelect'),variationSel=document.getElementById('admVariationSelect'),priceInput=document.getElementById('admVariationPrice');if(!productSel||!variationSel||!priceInput)return;const product_key=productSel.value,variation_index=parseInt(variationSel.value),price=parseFloat(priceInput.value||0);if(!product_key||Number.isNaN(variation_index)||price<=0)return alert('Select product, variation and valid price.');fetch(ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'sbha_super_admin_update_product_variation',nonce,product_key,variation_index,price})}).then(r=>r.json()).then(d=>{if(d.success){if(products[product_key]?.variations?.[variation_index])products[product_key].variations[variation_index].price=price;alert('Price updated');}else alert(d.data||'Update failed');}).catch(()=>alert('Network error'));};
+            (function sgpAdminInit(){const productSel=document.getElementById('admProductSelect');if(!productSel)return;const keys=Object.keys(products).sort((a,b)=>(products[a]?.name||'').localeCompare(products[b]?.name||''));keys.forEach(k=>{const opt=document.createElement('option');opt.value=k;opt.textContent=products[k]?.name||k;productSel.appendChild(opt);});window.sgpAdminLoadVariations();})();
 
             // WhatsApp
             window.sgpSendWA=()=>{const t=document.getElementById('waText').value.trim();if(!t)return alert('Describe what you need');window.open('https://wa.me/'+wa+'?text='+encodeURIComponent('Hi Switch Graphics!\n\n'+t),'_blank');};

@@ -3,7 +3,7 @@
  * Plugin Name: Switch Business Hub AI
  * Plugin URI: https://switchgraphics.co.za
  * Description: AI-Powered Customer Portal for Switch Graphics - Printing, Signage, Apparel & More
- * Version: 2.1.0
+ * Version: 2.2.0
  * Author: Switch Graphics (Pty) Ltd
  * Author URI: https://switchgraphics.co.za
  * License: GPL v2 or later
@@ -20,11 +20,11 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin Constants
-define('SBHA_VERSION', '2.1.0');
+define('SBHA_VERSION', '2.2.0');
 define('SBHA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SBHA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SBHA_PLUGIN_BASENAME', plugin_basename(__FILE__));
-define('SBHA_DB_VERSION', '1.3.0');
+define('SBHA_DB_VERSION', '1.4.0');
 
 /**
  * Main Switch Business Hub AI Class
@@ -120,6 +120,11 @@ final class Switch_Business_Hub_AI {
      * Initialize plugin components
      */
     public function init() {
+        // Run lightweight upgrade routine when DB version changes.
+        if (get_option('sbha_db_version') !== SBHA_DB_VERSION) {
+            SBHA_Installer::activate();
+        }
+
         // Initialize components
         $this->ai_engine = new SBHA_AI_Engine();
         $this->service_catalog = new SBHA_Service_Catalog();

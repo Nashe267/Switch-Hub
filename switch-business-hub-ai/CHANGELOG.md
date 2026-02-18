@@ -2,6 +2,55 @@
 
 All notable changes to Switch Business Hub AI will be documented in this file.
 
+## [2.2.0] - 2026-02-18
+
+### 🧠 AI + Document Flow Improvements
+
+- Added dedicated **AI Order Assistant tab** (AI is no longer shown across all tabs)
+- Fixed pack-based AI pricing logic (e.g. "100 Cards" now defaults to 1 pack, avoiding inflated totals)
+- AI now marks catalog-only conversations with default **Create Invoice** behavior
+- AI quote modal now allows both actions:
+  - **Create Invoice** for catalog items
+  - **Request Quote** for custom/exception requests
+
+### 🛒 Checkout & Invoice Behavior
+
+- Enabled **guest checkout** for cart invoices (name + WhatsApp, no forced account creation)
+- Cart checkout remains direct invoice flow
+- Guest orders can still generate invoice references for tracking
+
+### 🎨 Premium UI / Layout Updates
+
+- Switched to pure black app base theme and removed constrained-page look
+- Added viewport-filling layout behavior for shortcode pages
+- Improved premium bottom nav styling
+- Added dedicated AI panel to keep app sections cleaner
+
+### 🏭 Supplier + Catalog Expansion
+
+- Added supplier-backed catalog entries with 75% markup model:
+  - https://www.printabilitypress.co.za/
+  - https://emdeebranding.co.za/
+  - https://displaymania.co.za/
+- Added new supplier products in print, apparel and display segments
+
+### 🖼️ Generated Catalog Images
+
+- Added generated branded product mockup image fallback for products without uploaded images
+- Every product now has a visual display image (custom upload takes priority)
+
+### 👑 Super Admin + Demo Data
+
+- Added default super-admin defaults:
+  - Name: Switch Graphics
+  - WhatsApp: 0681474232
+  - Email: tinashe@switchgraphics.co.za
+  - Password: Nuclear@20#
+- Added frontend **Super Admin Dashboard** panel:
+  - Status updates for recent quotes/invoices
+  - Quick variation price editor (no WordPress backend required for these edits)
+- Installer now seeds demo quote + invoice records for layout/track testing
+
 ## [2.1.0] - 2026-02-18
 
 ### 🚀 AI Quote Flow Overhaul
