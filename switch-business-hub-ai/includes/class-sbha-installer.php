@@ -268,6 +268,8 @@ class SBHA_Installer {
             'sbha_bank_account_name' => 'Switch Graphics (Pty) Ltd',
             'sbha_bank_account_number' => '630 842 187 18',
             'sbha_bank_branch_code' => '250 655',
+            'sbha_quote_template_url' => '',
+            'sbha_invoice_template_url' => '',
             'sbha_currency' => 'ZAR',
             'sbha_currency_symbol' => 'R',
             'sbha_tax_rate' => 15,
@@ -299,6 +301,8 @@ class SBHA_Installer {
         update_option('sbha_bank_account_name', get_option('sbha_bank_account_name', 'Switch Graphics (Pty) Ltd'));
         update_option('sbha_bank_account_number', get_option('sbha_bank_account_number', '630 842 187 18'));
         update_option('sbha_bank_branch_code', get_option('sbha_bank_branch_code', '250 655'));
+        update_option('sbha_quote_template_url', get_option('sbha_quote_template_url', ''));
+        update_option('sbha_invoice_template_url', get_option('sbha_invoice_template_url', ''));
         update_option('sbha_super_admin_email', 'tinashe@switchgraphics.co.za');
         update_option('sbha_super_admin_phone', '0681474232');
     }

@@ -910,6 +910,15 @@ class SBHA_Ajax {
             wp_die('Document not found.');
         }
 
+        $is_invoice = strpos((string) ($row['quote_number'] ?? ''), 'INV-') === 0;
+        $template_url = $is_invoice
+            ? get_option('sbha_invoice_template_url', '')
+            : get_option('sbha_quote_template_url', '');
+        if (!empty($template_url) && empty($_REQUEST['force_generate']) && intval($_REQUEST['download'] ?? 0) !== 1) {
+            wp_redirect(esc_url_raw($template_url));
+            exit;
+        }
+
         if (empty($row['pdf_url'])) {
             $generated_url = $this->generate_document_file(intval($row['id']));
             if (!empty($generated_url)) {
@@ -1635,7 +1644,9 @@ class SBHA_Ajax {
             'sbha_bank_name' => sanitize_text_field($_POST['bank_name'] ?? get_option('sbha_bank_name', 'FNB/RMB')),
             'sbha_bank_account_name' => sanitize_text_field($_POST['bank_account_name'] ?? get_option('sbha_bank_account_name', 'Switch Graphics (Pty) Ltd')),
             'sbha_bank_account_number' => sanitize_text_field($_POST['bank_account_number'] ?? get_option('sbha_bank_account_number', '630 842 187 18')),
-            'sbha_bank_branch_code' => sanitize_text_field($_POST['bank_branch_code'] ?? get_option('sbha_bank_branch_code', '250 655'))
+            'sbha_bank_branch_code' => sanitize_text_field($_POST['bank_branch_code'] ?? get_option('sbha_bank_branch_code', '250 655')),
+            'sbha_quote_template_url' => esc_url_raw($_POST['quote_template_url'] ?? get_option('sbha_quote_template_url', '')),
+            'sbha_invoice_template_url' => esc_url_raw($_POST['invoice_template_url'] ?? get_option('sbha_invoice_template_url', ''))
         );
 
         foreach ($updates as $key => $value) {
