@@ -240,8 +240,22 @@ class SBHA_Ajax {
             wp_send_json_error('Cart is empty.');
         }
         
-        $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sbha_quotes WHERE quote_number LIKE 'SBH%'") + 1;
-        $invoice_number = 'SBH' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        // Ensure columns exist
+        $table_name = $wpdb->prefix . 'sbha_quotes';
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table_name}", 0);
+        if (!in_array('quote_type', $cols)) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN quote_type VARCHAR(20) DEFAULT 'quote'");
+        }
+        if (!in_array('payment_proof', $cols)) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN payment_proof TEXT");
+        }
+        if (!in_array('files', $cols)) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN files LONGTEXT");
+        }
+        
+        $max_num = $wpdb->get_var("SELECT MAX(CAST(REPLACE(REPLACE(quote_number, 'SBH', ''), 'INV-', '') AS UNSIGNED)) FROM {$table_name} WHERE quote_number LIKE '%SBH%'");
+        $next = ($max_num ? intval($max_num) : 0) + 1;
+        $invoice_number = 'SBH' . str_pad($next, 4, '0', STR_PAD_LEFT);
         
         $calculated_total = 0;
         foreach ($items as &$item) {
@@ -250,17 +264,17 @@ class SBHA_Ajax {
         }
         
         $wpdb->insert(
-            $wpdb->prefix . 'sbha_quotes',
+            $table_name,
             array(
                 'quote_number' => $invoice_number,
                 'customer_id' => $customer_id,
+                'email' => '',
                 'items' => json_encode($items),
                 'total' => $calculated_total,
                 'status' => 'pending',
                 'quote_type' => 'invoice',
                 'created_at' => current_time('mysql')
-            ),
-            array('%s', '%d', '%s', '%f', '%s', '%s', '%s')
+            )
         );
         
         $order_id = $wpdb->insert_id;
@@ -611,7 +625,11 @@ class SBHA_Ajax {
     public function submit_ai_quote() {
         global $wpdb;
 
-        check_ajax_referer('sbha_nonce', 'nonce');
+        // Verify nonce - support both GET and POST
+        $nonce = $_POST['nonce'] ?? $_REQUEST['nonce'] ?? '';
+        if (!wp_verify_nonce($nonce, 'sbha_nonce')) {
+            wp_send_json_error('Security check failed. Please refresh and try again.');
+        }
 
         $name = sanitize_text_field($_POST['name'] ?? '');
         $email = sanitize_email($_POST['email'] ?? '');
@@ -723,7 +741,25 @@ class SBHA_Ajax {
             }
         }
 
-        $wpdb->insert($wpdb->prefix . 'sbha_quotes', array(
+        // Ensure extra columns exist
+        $table_name = $wpdb->prefix . 'sbha_quotes';
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table_name}", 0);
+        if (!in_array('files', $cols)) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN files LONGTEXT");
+        }
+        if (!in_array('quote_type', $cols)) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN quote_type VARCHAR(20) DEFAULT 'quote'");
+        }
+        if (!in_array('payment_proof', $cols)) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN payment_proof TEXT");
+        }
+        
+        $has_design = false;
+        foreach ($items_summary as $it) {
+            if (!empty($it['needs_design'])) { $has_design = true; break; }
+        }
+
+        $insert_data = array(
             'quote_number' => $quote_number,
             'customer_id' => $customer_id,
             'email' => $email,
@@ -731,7 +767,7 @@ class SBHA_Ajax {
             'company' => '',
             'items' => json_encode($items_summary),
             'item_count' => count($items_summary),
-            'needs_design' => !empty(array_filter($items_summary, function($i) { return !empty($i['needs_design']); })) ? 1 : 0,
+            'needs_design' => $has_design ? 1 : 0,
             'delivery_needed' => !empty($delivery_info) ? 1 : 0,
             'delivery_location' => $delivery_info,
             'special_notes' => '',
@@ -739,8 +775,13 @@ class SBHA_Ajax {
             'total' => $total,
             'status' => 'pending',
             'created_at' => current_time('mysql'),
-            'files' => json_encode($files),
-        ));
+        );
+        
+        if (in_array('files', $cols) || true) {
+            $insert_data['files'] = json_encode($files);
+        }
+        
+        $wpdb->insert($table_name, $insert_data);
 
         $quote_id = $wpdb->insert_id;
 

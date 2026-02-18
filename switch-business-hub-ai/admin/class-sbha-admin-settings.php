@@ -104,6 +104,14 @@ class SBHA_Admin_Settings {
                 </td>
             </tr>
             <tr>
+                <th scope="row"><label for="sbha_logo_url">Logo URL</label></th>
+                <td>
+                    <input type="url" id="sbha_logo_url" name="sbha_logo_url" value="<?php echo esc_url(get_option('sbha_logo_url')); ?>" class="regular-text">
+                    <button type="button" class="button" onclick="var f=wp.media({title:'Select Logo',multiple:false});f.on('select',function(){var a=f.state().get('selection').first().toJSON();document.getElementById('sbha_logo_url').value=a.url;});f.open();">Select Image</button>
+                    <p class="description">Upload your business logo (displayed in the app header)</p>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row"><label for="sbha_reg_number">Registration Number</label></th>
                 <td>
                     <input type="text" id="sbha_reg_number" name="sbha_reg_number" value="<?php echo esc_attr(get_option('sbha_reg_number')); ?>" class="regular-text">
@@ -491,6 +499,7 @@ class SBHA_Admin_Settings {
                     'sbha_business_email',
                     'sbha_business_phone',
                     'sbha_business_address',
+                    'sbha_logo_url',
                     'sbha_reg_number',
                     'sbha_csd_number',
                     'sbha_welcome_message'
