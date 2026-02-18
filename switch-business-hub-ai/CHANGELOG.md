@@ -2,6 +2,44 @@
 
 All notable changes to Switch Business Hub AI will be documented in this file.
 
+## [2.2.1] - 2026-02-18
+
+### 🔧 Stability and UX Fixes
+
+- Fixed quote/invoice submit flow to avoid hard nonce failures on cached mobile pages
+- Added resilient AJAX JSON parsing in portal JS to prevent generic "Network error" popups
+- Made AI quote submit fields optional for low-friction customer flow (auto guest identity fallback)
+
+### 📄 Invoice/Quote Visibility and Downloads
+
+- Added public document endpoint by invoice/quote number for **View** and **Download**
+- Auto-generates and stores document files for new invoices/quotes in uploads
+- Added customer dashboard document controls (Open / Download)
+- Added admin dashboard document controls (View / Download + total/status edits)
+
+### 🛒 Cart and WhatsApp Ordering
+
+- Added **Send Order to WhatsApp** in cart with full order summary and banking details
+- Added WhatsApp handoff button after invoice creation confirmation
+
+### 🧩 Dashboard / Header / Branding
+
+- Added shortcode single-render guard to prevent duplicate app rendering blocks
+- Moved welcome block into Home panel so non-home tabs stay clean
+- Added logout button in header
+- Added business logo support in header and product cards
+- Added super-admin branding/banking editor inside portal (no WP backend required)
+
+### 🤖 AI Assistant Improvements
+
+- Updated variant quick buttons to be more click-friendly and descriptive
+- Expanded quick-choice behavior to reduce manual typing during product selection
+
+### ✉️ Email Improvements
+
+- Centralized portal email sending with safer headers and delivery logging
+- Added admin/customer send-state feedback in quote/invoice responses
+
 ## [2.2.0] - 2026-02-18
 
 ### 🧠 AI + Document Flow Improvements

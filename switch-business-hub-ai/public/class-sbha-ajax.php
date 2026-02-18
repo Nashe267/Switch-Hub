@@ -39,6 +39,8 @@ class SBHA_Ajax {
         // Documents
         add_action('wp_ajax_sbha_get_documents', array($this, 'get_documents'));
         add_action('wp_ajax_nopriv_sbha_get_documents', array($this, 'get_documents'));
+        add_action('wp_ajax_sbha_download_document', array($this, 'download_document'));
+        add_action('wp_ajax_nopriv_sbha_download_document', array($this, 'download_document'));
 
         // Contact
         add_action('wp_ajax_sbha_contact', array($this, 'contact'));
@@ -82,6 +84,10 @@ class SBHA_Ajax {
         add_action('wp_ajax_nopriv_sbha_super_admin_update_quote_status', array($this, 'super_admin_update_quote_status'));
         add_action('wp_ajax_sbha_super_admin_update_product_variation', array($this, 'super_admin_update_product_variation'));
         add_action('wp_ajax_nopriv_sbha_super_admin_update_product_variation', array($this, 'super_admin_update_product_variation'));
+        add_action('wp_ajax_sbha_super_admin_update_document', array($this, 'super_admin_update_document'));
+        add_action('wp_ajax_nopriv_sbha_super_admin_update_document', array($this, 'super_admin_update_document'));
+        add_action('wp_ajax_sbha_super_admin_save_branding', array($this, 'super_admin_save_branding'));
+        add_action('wp_ajax_nopriv_sbha_super_admin_save_branding', array($this, 'super_admin_save_branding'));
     }
 
     /**
@@ -421,7 +427,7 @@ class SBHA_Ajax {
      */
     public function create_invoice() {
         global $wpdb;
-        check_ajax_referer('sbha_nonce', 'nonce');
+        $this->verify_public_nonce();
         
         $customer_id = $this->get_customer_id();
         if (!$customer_id) {
@@ -440,7 +446,6 @@ class SBHA_Ajax {
         }
         
         $items = json_decode(stripslashes($_POST['items'] ?? '[]'), true);
-        $total = floatval($_POST['total'] ?? 0);
         
         if (empty($items)) {
             wp_send_json_error('Cart is empty.');
@@ -480,6 +485,14 @@ class SBHA_Ajax {
             "SELECT * FROM {$wpdb->prefix}sbha_customers WHERE id = %d",
             $customer_id
         ));
+        if (!$customer) {
+            $customer = (object) array(
+                'email' => '',
+                'cell_number' => '',
+                'first_name' => 'Client',
+                'last_name' => ''
+            );
+        }
 
         // Insert invoice record into quotes table
         $wpdb->insert(
@@ -494,18 +507,77 @@ class SBHA_Ajax {
                 'total' => $calculated_total,
                 'status' => 'pending',
                 'special_notes' => $special_notes,
+                'pdf_url' => '',
                 'created_at' => current_time('mysql')
             ),
-            array('%s', '%d', '%s', '%s', '%s', '%d', '%f', '%s', '%s', '%s')
+            array('%s', '%d', '%s', '%s', '%s', '%d', '%f', '%s', '%s', '%s', '%s')
         );
         
         $order_id = $wpdb->insert_id;
+        $document_url = '';
+        if ($order_id) {
+            $document_url = $this->generate_document_file($order_id);
+        }
+
+        // Send admin + customer email notifications.
+        $admin_email = get_option('sbha_business_email', get_option('admin_email'));
+        $customer_name = trim(($customer->first_name ?? '') . ' ' . ($customer->last_name ?? ''));
+        if ($customer_name === '') {
+            $customer_name = 'Client';
+        }
+
+        $lines = array();
+        foreach ($items as $item) {
+            $name = sanitize_text_field($item['name'] ?? $item['product'] ?? 'Item');
+            $variant = sanitize_text_field($item['variation'] ?? $item['variant'] ?? '');
+            $qty = intval($item['quantity'] ?? 1);
+            $price = floatval($item['price'] ?? 0);
+            $line_total = $qty * $price;
+            $lines[] = "{$name}" . ($variant ? " ({$variant})" : '') . " x{$qty} = R" . number_format($line_total, 2);
+        }
+
+        $admin_body = "New invoice created: {$invoice_number}\n\n";
+        $admin_body .= "Customer: {$customer_name}\n";
+        $admin_body .= "Email: " . ($customer->email ?? '-') . "\n";
+        $admin_body .= "Phone: " . ($customer->cell_number ?? '-') . "\n\n";
+        $admin_body .= "Items:\n- " . implode("\n- ", $lines) . "\n\n";
+        $admin_body .= "Total: R" . number_format($calculated_total, 2) . "\n";
+        if ($document_url) {
+            $admin_body .= "Document: {$document_url}\n";
+        }
+        $admin_sent = $this->send_portal_email($admin_email, "New Invoice {$invoice_number}", $admin_body, $customer->email ?? '');
+
+        $customer_sent = false;
+        $customer_mail = sanitize_email($customer->email ?? '');
+        if (strpos((string) $customer_mail, '@switchhub.local') !== false || strpos((string) $customer_mail, '@switchgraphics.local') !== false) {
+            $customer_mail = '';
+        }
+        if (!empty($customer_mail)) {
+            $customer_body = "Hi {$customer_name},\n\n";
+            $customer_body .= "Your invoice has been created.\n";
+            $customer_body .= "Invoice: {$invoice_number}\n";
+            $customer_body .= "Total: R" . number_format($calculated_total, 2) . "\n\n";
+            $customer_body .= "Banking Details:\n";
+            $customer_body .= "Bank: " . get_option('sbha_bank_name', 'FNB/RMB') . "\n";
+            $customer_body .= "Account Name: " . get_option('sbha_bank_account_name', 'Switch Graphics (Pty) Ltd') . "\n";
+            $customer_body .= "Account Number: " . get_option('sbha_bank_account_number', '630 842 187 18') . "\n";
+            $customer_body .= "Branch Code: " . get_option('sbha_bank_branch_code', '250 655') . "\n";
+            $customer_body .= "Reference: {$invoice_number}\n\n";
+            if ($document_url) {
+                $customer_body .= "View/Download: {$document_url}\n\n";
+            }
+            $customer_body .= "Thank you for choosing Switch Graphics.";
+            $customer_sent = $this->send_portal_email($customer_mail, "Invoice Created - {$invoice_number}", $customer_body);
+        }
 
         wp_send_json_success(array(
             'invoice_number' => $invoice_number,
             'order_id' => $order_id,
             'total' => $calculated_total,
-            'message' => 'Invoice created! Pay via EFT and upload proof.'
+            'message' => 'Invoice created! Pay via EFT and upload proof.',
+            'document_url' => $document_url,
+            'email_admin_sent' => $admin_sent,
+            'email_customer_sent' => $customer_sent
         ));
     }
 
@@ -618,7 +690,7 @@ class SBHA_Ajax {
      */
     public function track_order() {
         global $wpdb;
-        check_ajax_referer('sbha_nonce', 'nonce');
+        $this->verify_public_nonce();
 
         $invoice = sanitize_text_field($_POST['invoice'] ?? '');
         if (empty($invoice)) {
@@ -785,31 +857,84 @@ class SBHA_Ajax {
             wp_send_json_success(array('documents' => array()));
         }
 
-        $quotes = $wpdb->get_results($wpdb->prepare("
-            SELECT q.*, o.title as service FROM {$wpdb->prefix}sbha_quotes q
-            JOIN {$wpdb->prefix}sbha_orders o ON q.order_id = o.id
-            WHERE q.customer_id = %d ORDER BY q.created_at DESC
-        ", $customer_id), ARRAY_A);
-
-        $invoices = $wpdb->get_results($wpdb->prepare("
-            SELECT i.*, o.title as service FROM {$wpdb->prefix}sbha_invoices i
-            JOIN {$wpdb->prefix}sbha_orders o ON i.order_id = o.id
-            WHERE i.customer_id = %d ORDER BY i.created_at DESC
-        ", $customer_id), ARRAY_A);
-
         $docs = array();
-        foreach ($quotes as $q) {
-            $docs[] = array('type' => 'Quote', 'number' => $q['quote_number'], 'service' => $q['service'],
-                'total' => 'R' . number_format($q['total'], 2), 'date' => date('d M Y', strtotime($q['created_at'])),
-                'status' => $q['status'], 'pdf_url' => $q['pdf_url']);
-        }
-        foreach ($invoices as $i) {
-            $docs[] = array('type' => 'Invoice', 'number' => $i['invoice_number'], 'service' => $i['service'],
-                'total' => 'R' . number_format($i['total'], 2), 'date' => date('d M Y', strtotime($i['created_at'])),
-                'status' => $i['status'], 'pdf_url' => $i['pdf_url']);
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}sbha_quotes WHERE customer_id = %d ORDER BY created_at DESC LIMIT 100",
+            $customer_id
+        ), ARRAY_A);
+
+        foreach ($rows as $q) {
+            $items = json_decode($q['items'] ?? '[]', true);
+            $first_item = is_array($items) && !empty($items[0]['product']) ? $items[0]['product'] : (is_array($items) && !empty($items[0]['product_name']) ? $items[0]['product_name'] : 'Order');
+            $number = $q['quote_number'];
+            $docs[] = array(
+                'type' => strpos((string) $number, 'INV-') === 0 ? 'Invoice' : 'Quote',
+                'number' => $number,
+                'service' => $first_item,
+                'total' => 'R' . number_format(floatval($q['total']), 2),
+                'date' => date('d M Y', strtotime($q['created_at'])),
+                'status' => $q['status'],
+                'pdf_url' => $q['pdf_url'],
+                'download_url' => add_query_arg(array(
+                    'action' => 'sbha_download_document',
+                    'number' => $number,
+                    'download' => 1
+                ), admin_url('admin-ajax.php')),
+                'view_url' => add_query_arg(array(
+                    'action' => 'sbha_download_document',
+                    'number' => $number
+                ), admin_url('admin-ajax.php'))
+            );
         }
 
         wp_send_json_success(array('documents' => $docs));
+    }
+
+    /**
+     * Download or view generated quote/invoice document by number.
+     */
+    public function download_document() {
+        global $wpdb;
+
+        $number = sanitize_text_field($_REQUEST['number'] ?? '');
+        if ($number === '') {
+            wp_die('Document number missing.');
+        }
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}sbha_quotes WHERE quote_number = %s LIMIT 1",
+            $number
+        ), ARRAY_A);
+
+        if (!$row) {
+            wp_die('Document not found.');
+        }
+
+        if (empty($row['pdf_url'])) {
+            $generated_url = $this->generate_document_file(intval($row['id']));
+            if (!empty($generated_url)) {
+                $row['pdf_url'] = $generated_url;
+            }
+        }
+
+        if (!empty($row['pdf_url']) && empty($_REQUEST['force_generate'])) {
+            wp_redirect(esc_url_raw($row['pdf_url']));
+            exit;
+        }
+
+        $html = $this->build_document_html($row);
+        $download = intval($_REQUEST['download'] ?? 0) === 1;
+
+        nocache_headers();
+        header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
+        if ($download) {
+            header('Content-Disposition: attachment; filename="' . sanitize_file_name($number . '.html') . '"');
+        } else {
+            header('Content-Disposition: inline; filename="' . sanitize_file_name($number . '.html') . '"');
+        }
+
+        echo $html;
+        exit;
     }
 
     /**
@@ -832,9 +957,12 @@ class SBHA_Ajax {
             'name' => $name, 'email' => $email, 'phone' => $phone, 'message' => $message
         ));
 
-        wp_mail(get_option('sbha_business_email', get_option('admin_email')),
-            "Message from {$name}", "Name: {$name}\nEmail: {$email}\nPhone: {$phone}\n\n{$message}",
-            array("Reply-To: {$email}"));
+        $this->send_portal_email(
+            get_option('sbha_business_email', get_option('admin_email')),
+            "Message from {$name}",
+            "Name: {$name}\nEmail: {$email}\nPhone: {$phone}\n\n{$message}",
+            $email
+        );
 
         wp_send_json_success(array('message' => 'Message sent!'));
     }
@@ -908,7 +1036,7 @@ class SBHA_Ajax {
      * Persist AI chat history (customer/session scoped).
      */
     public function save_chat_history() {
-        check_ajax_referer('sbha_nonce', 'nonce');
+        $this->verify_public_nonce();
 
         $history_raw = stripslashes($_POST['history'] ?? '[]');
         $history = json_decode($history_raw, true);
@@ -947,7 +1075,7 @@ class SBHA_Ajax {
      * Return stored chat history.
      */
     public function get_chat_history() {
-        check_ajax_referer('sbha_nonce', 'nonce');
+        $this->verify_public_nonce();
 
         $customer_id = $this->get_customer_id();
         $session_id = $this->get_public_session_id();
@@ -992,6 +1120,22 @@ class SBHA_Ajax {
     private function get_public_session_id() {
         $session = sanitize_text_field($_COOKIE['sbha_session'] ?? $_POST['session_id'] ?? '');
         return $session;
+    }
+
+    /**
+     * Public endpoints should not hard-fail on nonce mismatch in cached pages.
+     * Returns true when nonce is valid, otherwise false.
+     */
+    private function verify_public_nonce() {
+        $nonce = sanitize_text_field($_REQUEST['nonce'] ?? '');
+        if ($nonce === '') {
+            return false;
+        }
+        return (bool) wp_verify_nonce($nonce, 'sbha_nonce');
+    }
+
+    private function generate_guest_phone() {
+        return '7' . wp_rand(100000000, 999999999);
     }
 
     private function resolve_or_create_guest_customer($name, $phone, $email = '') {
@@ -1140,6 +1284,203 @@ class SBHA_Ajax {
         return $files;
     }
 
+    private function send_portal_email($to, $subject, $body, $reply_to = '') {
+        $to = sanitize_email($to);
+        if (empty($to)) {
+            return false;
+        }
+
+        $from_email = sanitize_email(get_option('sbha_business_email', get_option('admin_email')));
+        if (empty($from_email)) {
+            $from_email = 'noreply@' . preg_replace('/^www\./', '', parse_url(home_url(), PHP_URL_HOST));
+        }
+
+        $from_name = sanitize_text_field(get_option('sbha_business_name', 'Switch Graphics'));
+        $headers = array(
+            'Content-Type: text/plain; charset=UTF-8',
+            'From: ' . $from_name . ' <' . $from_email . '>'
+        );
+
+        $reply = sanitize_email($reply_to);
+        if (!empty($reply)) {
+            $headers[] = 'Reply-To: ' . $reply;
+        } elseif (!empty($from_email)) {
+            $headers[] = 'Reply-To: ' . $from_email;
+        }
+
+        $sent = wp_mail($to, $subject, $body, $headers);
+
+        $log = get_option('sbha_email_delivery_log', array());
+        if (!is_array($log)) {
+            $log = array();
+        }
+        $log[] = array(
+            'to' => $to,
+            'subject' => sanitize_text_field($subject),
+            'sent' => $sent ? 1 : 0,
+            'time' => current_time('mysql')
+        );
+        if (count($log) > 100) {
+            $log = array_slice($log, -100);
+        }
+        update_option('sbha_email_delivery_log', $log);
+
+        return (bool) $sent;
+    }
+
+    private function build_document_html($row) {
+        global $wpdb;
+
+        $number = sanitize_text_field($row['quote_number'] ?? '');
+        $is_invoice = strpos($number, 'INV-') === 0;
+        $title = $is_invoice ? 'INVOICE' : 'QUOTATION';
+
+        $customer = null;
+        if (!empty($row['customer_id'])) {
+            $customer = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}sbha_customers WHERE id = %d",
+                intval($row['customer_id'])
+            ), ARRAY_A);
+        }
+
+        $items = json_decode($row['items'] ?? '[]', true);
+        if (!is_array($items)) {
+            $items = array();
+        }
+
+        $business_name = get_option('sbha_business_name', 'Switch Graphics (Pty) Ltd');
+        $business_reg = get_option('sbha_business_reg_number', 'Reg: 2023/000000/07');
+        $business_csd = get_option('sbha_business_csd_number', 'CSD: MAAA0000000');
+        $business_email = get_option('sbha_business_email', 'info@switchgraphics.co.za');
+        $business_phone = get_option('sbha_business_phone', '068 147 4232');
+        $business_address = get_option('sbha_business_address', '16 Harding Street, Newcastle, 2940');
+        $business_logo = get_option('sbha_business_logo', '');
+
+        $bank_name = get_option('sbha_bank_name', 'FNB/RMB');
+        $bank_account_name = get_option('sbha_bank_account_name', 'Switch Graphics (Pty) Ltd');
+        $bank_account_number = get_option('sbha_bank_account_number', '630 842 187 18');
+        $bank_branch_code = get_option('sbha_bank_branch_code', '250 655');
+
+        $customer_name = trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
+        if ($customer_name === '') {
+            $customer_name = 'Client';
+        }
+        $customer_phone = $row['phone'] ?? ($customer['cell_number'] ?? '');
+        $customer_email = $row['email'] ?? ($customer['email'] ?? '');
+
+        $line_rows = '';
+        $calc_total = 0.0;
+        foreach ($items as $i => $item) {
+            $product = sanitize_text_field($item['product'] ?? $item['product_name'] ?? 'Item');
+            $variant = sanitize_text_field($item['variant'] ?? $item['variant_name'] ?? '');
+            $sku = sanitize_text_field($item['sku'] ?? $item['variant_sku'] ?? '');
+            $qty = max(1, intval($item['quantity'] ?? $item['qty'] ?? 1));
+            $unit = floatval($item['unit_price'] ?? $item['price'] ?? 0);
+            $design_fee = floatval($item['design_fee'] ?? 0);
+            $delivery_fee = floatval($item['delivery_fee'] ?? 0);
+            $subtotal = ($unit * $qty) + $design_fee + $delivery_fee;
+            if (!empty($item['subtotal'])) {
+                $subtotal = floatval($item['subtotal']);
+            }
+            $calc_total += $subtotal;
+
+            $meta = trim($variant . ($sku ? " | SKU: {$sku}" : ''));
+            $line_rows .= '<tr>'
+                . '<td>' . ($i + 1) . '</td>'
+                . '<td><strong>' . esc_html($product) . '</strong>' . ($meta ? '<div class="meta">' . esc_html($meta) . '</div>' : '') . '</td>'
+                . '<td>' . $qty . '</td>'
+                . '<td>R' . number_format($unit, 2) . '</td>'
+                . '<td>R' . number_format($subtotal, 2) . '</td>'
+                . '</tr>';
+        }
+        if ($line_rows === '') {
+            $line_rows = '<tr><td>1</td><td><strong>Custom Item</strong></td><td>1</td><td>R' . number_format(floatval($row['total']), 2) . '</td><td>R' . number_format(floatval($row['total']), 2) . '</td></tr>';
+            $calc_total = floatval($row['total']);
+        }
+
+        $total = floatval($row['total'] ?? $calc_total);
+        if ($total <= 0) {
+            $total = $calc_total;
+        }
+
+        $notes = trim((string) ($row['special_notes'] ?? ''));
+        $created = !empty($row['created_at']) ? date('d M Y', strtotime($row['created_at'])) : date('d M Y');
+        $logo_html = !empty($business_logo)
+            ? '<img src="' . esc_url($business_logo) . '" alt="Logo" style="height:56px;max-width:180px;object-fit:contain;">'
+            : '<div style="font-size:26px;font-weight:800;color:#FF6600;">SWITCH GRAPHICS</div>';
+
+        $html = '<!doctype html><html><head><meta charset="utf-8"><title>' . esc_html($number) . '</title>'
+            . '<style>'
+            . 'body{font-family:Arial,sans-serif;background:#f4f5f8;color:#111;padding:20px;}'
+            . '.wrap{max-width:920px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;}'
+            . '.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px;}'
+            . '.doc{font-size:30px;font-weight:800;color:#FF6600;margin:0;}'
+            . '.muted{color:#6b7280;font-size:12px;}'
+            . '.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px;}'
+            . '.card{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;}'
+            . 'table{width:100%;border-collapse:collapse;margin-top:12px;} th,td{border:1px solid #e5e7eb;padding:8px;font-size:13px;text-align:left;} th{background:#fff7ed;}'
+            . '.meta{font-size:11px;color:#6b7280;margin-top:3px;}'
+            . '.totals{margin-top:16px;display:flex;justify-content:flex-end;} .totals .box{min-width:300px;border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fff7ed;}'
+            . '.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #fed7aa;} .row:last-child{border-bottom:none;font-size:18px;font-weight:800;}'
+            . '.bank{margin-top:16px;background:#111;color:#fff;border-radius:10px;padding:12px;} .bank h4{margin:0 0 8px;color:#FFB27F;}'
+            . '.print{margin-top:16px;text-align:right;} .btn{background:#FF6600;color:#fff;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;}'
+            . '@media print {.print{display:none} body{background:#fff;padding:0} .wrap{border:none;padding:0;max-width:100%;}}'
+            . '</style></head><body><div class="wrap">'
+            . '<div class="top"><div>' . $logo_html . '<div class="muted">' . esc_html($business_reg) . ' • ' . esc_html($business_csd) . '</div></div>'
+            . '<div style="text-align:right"><p class="doc">' . esc_html($title) . '</p><div><strong>' . esc_html($number) . '</strong></div><div class="muted">Date: ' . esc_html($created) . '</div></div></div>'
+            . '<div class="grid"><div class="card"><strong>From</strong><br>' . esc_html($business_name) . '<br>' . esc_html($business_address) . '<br>' . esc_html($business_phone) . '<br>' . esc_html($business_email) . '</div>'
+            . '<div class="card"><strong>To</strong><br>' . esc_html($customer_name) . '<br>' . esc_html($customer_phone) . '<br>' . esc_html($customer_email) . '</div></div>'
+            . '<table><thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit</th><th>Line Total</th></tr></thead><tbody>' . $line_rows . '</tbody></table>'
+            . '<div class="totals"><div class="box"><div class="row"><span>Subtotal</span><span>R' . number_format($total, 2) . '</span></div><div class="row"><span>Total</span><span>R' . number_format($total, 2) . '</span></div></div></div>';
+
+        if ($notes !== '') {
+            $html .= '<div class="card" style="margin-top:14px;"><strong>Notes</strong><br>' . nl2br(esc_html($notes)) . '</div>';
+        }
+
+        $html .= '<div class="bank"><h4>Banking Details</h4>'
+            . 'Bank: ' . esc_html($bank_name) . '<br>'
+            . 'Account Name: ' . esc_html($bank_account_name) . '<br>'
+            . 'Account Number: ' . esc_html($bank_account_number) . '<br>'
+            . 'Branch Code: ' . esc_html($bank_branch_code) . '<br>'
+            . 'Reference: ' . esc_html($number)
+            . '</div>'
+            . '<div class="print"><button class="btn" onclick="window.print()">Print / Save as PDF</button></div>'
+            . '</div></body></html>';
+
+        return $html;
+    }
+
+    private function generate_document_file($quote_id) {
+        global $wpdb;
+
+        if (!$quote_id) {
+            return '';
+        }
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}sbha_quotes WHERE id = %d LIMIT 1",
+            intval($quote_id)
+        ), ARRAY_A);
+        if (!$row) {
+            return '';
+        }
+
+        $html = $this->build_document_html($row);
+        $filename = sanitize_file_name(($row['quote_number'] ?? 'document') . '-' . date('YmdHis') . '.html');
+        $saved = wp_upload_bits($filename, null, $html);
+        if (!empty($saved['error']) || empty($saved['url'])) {
+            return '';
+        }
+
+        $wpdb->update(
+            $wpdb->prefix . 'sbha_quotes',
+            array('pdf_url' => esc_url_raw($saved['url'])),
+            array('id' => intval($row['id']))
+        );
+
+        return esc_url_raw($saved['url']);
+    }
+
     private function is_super_admin_customer($customer = null) {
         if (!$customer || !is_array($customer)) {
             return false;
@@ -1227,6 +1568,83 @@ class SBHA_Ajax {
             'product_key' => $product_key,
             'variation_index' => $variation_index,
             'price' => $price
+        ));
+    }
+
+    public function super_admin_update_document() {
+        check_ajax_referer('sbha_nonce', 'nonce');
+        global $wpdb;
+
+        $customer = $this->get_customer();
+        if (!$this->is_super_admin_customer($customer)) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $quote_id = intval($_POST['quote_id'] ?? 0);
+        $total = floatval($_POST['total'] ?? 0);
+        $status = sanitize_text_field($_POST['status'] ?? '');
+        $admin_notes = sanitize_textarea_field($_POST['admin_notes'] ?? '');
+
+        if ($quote_id < 1) {
+            wp_send_json_error('Invalid document.');
+        }
+
+        $payload = array();
+        if ($total > 0) {
+            $payload['total'] = $total;
+        }
+        if ($admin_notes !== '') {
+            $payload['admin_notes'] = $admin_notes;
+        }
+
+        $allowed = array('pending', 'reviewed', 'quoted', 'accepted', 'rejected', 'expired', 'processing', 'ready', 'completed', 'cancelled');
+        if ($status && in_array($status, $allowed, true)) {
+            $payload['status'] = $status;
+        }
+
+        if (empty($payload)) {
+            wp_send_json_error('Nothing to update.');
+        }
+
+        $updated = $wpdb->update($wpdb->prefix . 'sbha_quotes', $payload, array('id' => $quote_id));
+        if ($updated === false) {
+            wp_send_json_error('Update failed.');
+        }
+
+        $document_url = $this->generate_document_file($quote_id);
+
+        wp_send_json_success(array(
+            'message' => 'Document updated.',
+            'document_url' => $document_url
+        ));
+    }
+
+    public function super_admin_save_branding() {
+        check_ajax_referer('sbha_nonce', 'nonce');
+
+        $customer = $this->get_customer();
+        if (!$this->is_super_admin_customer($customer)) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $updates = array(
+            'sbha_business_name' => sanitize_text_field($_POST['business_name'] ?? get_option('sbha_business_name', 'Switch Graphics (Pty) Ltd')),
+            'sbha_business_reg_number' => sanitize_text_field($_POST['business_reg_number'] ?? get_option('sbha_business_reg_number', '')),
+            'sbha_business_csd_number' => sanitize_text_field($_POST['business_csd_number'] ?? get_option('sbha_business_csd_number', '')),
+            'sbha_business_logo' => esc_url_raw($_POST['business_logo'] ?? get_option('sbha_business_logo', '')),
+            'sbha_bank_name' => sanitize_text_field($_POST['bank_name'] ?? get_option('sbha_bank_name', 'FNB/RMB')),
+            'sbha_bank_account_name' => sanitize_text_field($_POST['bank_account_name'] ?? get_option('sbha_bank_account_name', 'Switch Graphics (Pty) Ltd')),
+            'sbha_bank_account_number' => sanitize_text_field($_POST['bank_account_number'] ?? get_option('sbha_bank_account_number', '630 842 187 18')),
+            'sbha_bank_branch_code' => sanitize_text_field($_POST['bank_branch_code'] ?? get_option('sbha_bank_branch_code', '250 655'))
+        );
+
+        foreach ($updates as $key => $value) {
+            update_option($key, $value);
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Branding details saved.',
+            'business_logo' => $updates['sbha_business_logo']
         ));
     }
 
@@ -1342,7 +1760,7 @@ class SBHA_Ajax {
      * AI Chat - Smart Print & Graphics Industry Assistant
      */
     public function ai_chat() {
-        check_ajax_referer('sbha_nonce', 'nonce');
+        $this->verify_public_nonce();
 
         $message = sanitize_text_field($_POST['message'] ?? '');
         $context_json = stripslashes($_POST['context'] ?? '{}');
@@ -1380,7 +1798,7 @@ class SBHA_Ajax {
     public function submit_ai_quote() {
         global $wpdb;
 
-        check_ajax_referer('sbha_nonce', 'nonce');
+        $this->verify_public_nonce();
 
         $name = sanitize_text_field($_POST['name'] ?? '');
         $email_input = sanitize_email($_POST['email'] ?? '');
@@ -1402,16 +1820,14 @@ class SBHA_Ajax {
             $requested_document = 'quote';
         }
 
-        // Phone is required
-        if (empty($name) || empty($phone)) {
-            wp_send_json_error('Please enter your name and WhatsApp number.');
+        if (empty($name)) {
+            $name = 'Client';
         }
 
-        // Normalize phone
+        // Normalize phone, but auto-generate one for low-friction guest flow.
         $phone = preg_replace('/[^0-9]/', '', $phone);
-
         if (strlen($phone) < 9) {
-            wp_send_json_error('Please enter a valid WhatsApp number.');
+            $phone = $this->generate_guest_phone();
         }
 
         $email = $this->resolve_customer_email($email_input, $phone);
@@ -1615,11 +2031,16 @@ class SBHA_Ajax {
             'special_notes' => $special_notes,
             'chat_transcript' => $transcript,
             'total' => $total,
+            'pdf_url' => '',
             'status' => 'pending',
             'created_at' => current_time('mysql')
         ));
 
         $quote_id = $wpdb->insert_id;
+        $document_url = '';
+        if ($quote_id) {
+            $document_url = $this->generate_document_file($quote_id);
+        }
 
         // Email admin
         $admin_email = get_option('sbha_business_email', get_option('admin_email'));
@@ -1649,7 +2070,7 @@ class SBHA_Ajax {
         $email_body .= "\n💰 ESTIMATED TOTAL: R" . number_format($total, 2) . "\n";
         $email_body .= "\n--- CHAT TRANSCRIPT ---\n" . $transcript;
 
-        wp_mail($admin_email, "New {$admin_document_label}: {$quote_number} - {$name}", $email_body);
+        $admin_sent = $this->send_portal_email($admin_email, "New {$admin_document_label}: {$quote_number} - {$name}", $email_body, $email_input);
 
         // Email customer
         $customer_email = "Hi {$name},\n\n";
@@ -1663,6 +2084,9 @@ class SBHA_Ajax {
         } else {
             $customer_email .= "We'll review your request and send you a formal quote shortly.\n\n";
         }
+        if (!empty($document_url)) {
+            $customer_email .= "View/Download Document: {$document_url}\n\n";
+        }
         $customer_email .= "If you have any questions, feel free to WhatsApp us at " . get_option('sbha_whatsapp', '068 147 4232') . "\n\n";
         $customer_email .= "Thank you for choosing Switch Graphics!\n\n";
         $customer_email .= "---\n";
@@ -1671,11 +2095,17 @@ class SBHA_Ajax {
         $customer_email .= "Tel: 068 147 4232\n";
         $customer_email .= "www.switchgraphics.co.za";
 
-        if (!empty($email_input)) {
+        $customer_email_target = !empty($email_input) ? $email_input : $email;
+        if (strpos((string) $customer_email_target, '@switchhub.local') !== false || strpos((string) $customer_email_target, '@switchgraphics.local') !== false) {
+            $customer_email_target = '';
+        }
+
+        $customer_sent = false;
+        if (!empty($customer_email_target)) {
             $customer_subject = $requested_document === 'invoice'
                 ? "Invoice Created - {$quote_number}"
                 : "Quote Request Received - {$quote_number}";
-            wp_mail($email_input, $customer_subject, $customer_email);
+            $customer_sent = $this->send_portal_email($customer_email_target, $customer_subject, $customer_email);
         }
 
         wp_send_json_success(array(
@@ -1686,7 +2116,10 @@ class SBHA_Ajax {
             'account_created' => $account_created,
             'token' => $token,
             'document_type' => $requested_document,
-            'document_number' => $quote_number
+            'document_number' => $quote_number,
+            'document_url' => $document_url,
+            'email_admin_sent' => $admin_sent,
+            'email_customer_sent' => $customer_sent
         ));
     }
 }

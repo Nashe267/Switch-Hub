@@ -259,10 +259,15 @@ class SBHA_Installer {
             'sbha_business_phone' => '068 147 4232',
             'sbha_whatsapp' => '068 147 4232',
             'sbha_business_address' => '16 Harding Street, Newcastle, 2940',
+            'sbha_business_logo' => '',
             'sbha_business_reg_number' => 'Reg: 2023/000000/07',
             'sbha_business_csd_number' => 'CSD: MAAA0000000',
             'sbha_super_admin_email' => 'tinashe@switchgraphics.co.za',
             'sbha_super_admin_phone' => '0681474232',
+            'sbha_bank_name' => 'FNB/RMB',
+            'sbha_bank_account_name' => 'Switch Graphics (Pty) Ltd',
+            'sbha_bank_account_number' => '630 842 187 18',
+            'sbha_bank_branch_code' => '250 655',
             'sbha_currency' => 'ZAR',
             'sbha_currency_symbol' => 'R',
             'sbha_tax_rate' => 15,
@@ -287,6 +292,13 @@ class SBHA_Installer {
         update_option('sbha_business_email', 'tinashe@switchgraphics.co.za');
         update_option('sbha_business_phone', '068 147 4232');
         update_option('sbha_whatsapp', '068 147 4232');
+        if (get_option('sbha_business_logo', null) === null) {
+            update_option('sbha_business_logo', '');
+        }
+        update_option('sbha_bank_name', get_option('sbha_bank_name', 'FNB/RMB'));
+        update_option('sbha_bank_account_name', get_option('sbha_bank_account_name', 'Switch Graphics (Pty) Ltd'));
+        update_option('sbha_bank_account_number', get_option('sbha_bank_account_number', '630 842 187 18'));
+        update_option('sbha_bank_branch_code', get_option('sbha_bank_branch_code', '250 655'));
         update_option('sbha_super_admin_email', 'tinashe@switchgraphics.co.za');
         update_option('sbha_super_admin_phone', '0681474232');
     }

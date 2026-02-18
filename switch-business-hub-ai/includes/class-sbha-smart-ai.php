@@ -3,7 +3,7 @@
  * Smart AI - guided quote assistant for print/signage/design.
  *
  * @package SwitchBusinessHub
- * @version 2.2.0
+ * @version 2.2.1
  */
 
 if (!defined('ABSPATH')) {
@@ -185,10 +185,14 @@ class SBHA_Smart_AI {
             $price = number_format(floatval($variation['price'] ?? 0), 2);
             $sku = !empty($variation['sku']) ? " | SKU: {$variation['sku']}" : '';
             $text .= "{$line_no}. {$variation['name']} - R{$price}{$sku}\n";
-            if ($idx < 5) {
+            if ($idx < 8) {
+                $short_label = (string) ($variation['name'] ?? ('Option ' . $line_no));
+                if (strlen($short_label) > 26) {
+                    $short_label = substr($short_label, 0, 23) . '...';
+                }
                 $buttons[] = array(
-                    'text' => "{$line_no}. R" . number_format(floatval($variation['price'] ?? 0), 0),
-                    'value' => (string) $line_no
+                    'text' => $short_label,
+                    'value' => (string) ($variation['name'] ?? $line_no)
                 );
             }
         }

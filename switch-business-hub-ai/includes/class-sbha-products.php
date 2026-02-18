@@ -8,7 +8,7 @@
  * - Normalized 75% markup baseline where cost exists
  *
  * @package SwitchBusinessHub
- * @version 2.2.0
+ * @version 2.2.1
  */
 
 if (!defined('ABSPATH')) exit;
@@ -773,9 +773,39 @@ class SBHA_Products {
         $title = $product['name'] ?? ucwords(str_replace('_', ' ', $key));
         $category = strtolower($product['category'] ?? 'services');
         $palette = self::get_category_palette($category);
+        $logo_url = trim((string) get_option('sbha_business_logo', ''));
+        $business_name = trim((string) get_option('sbha_business_name', 'Switch Graphics'));
 
         $title = substr((string) $title, 0, 34);
-        $subtitle = 'Switch Graphics';
+        $subtitle = $business_name !== '' ? $business_name : 'Switch Graphics';
+
+        $mockup = '<rect x="560" y="180" width="248" height="164" rx="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.24)" stroke-width="2"/>'
+            . '<rect x="588" y="214" width="190" height="24" rx="8" fill="rgba(255,255,255,0.2)"/>'
+            . '<rect x="588" y="250" width="140" height="14" rx="6" fill="rgba(255,255,255,0.14)"/>'
+            . '<rect x="588" y="274" width="106" height="10" rx="5" fill="rgba(255,255,255,0.12)"/>';
+
+        if ($category === 'business_cards') {
+            $mockup = '<g transform="rotate(-8 670 272)"><rect x="548" y="198" width="250" height="160" rx="14" fill="#f8fafc" opacity="0.95"/>'
+                . '<rect x="576" y="226" width="172" height="22" rx="6" fill="#111827" opacity="0.9"/>'
+                . '<rect x="576" y="258" width="130" height="12" rx="6" fill="#6b7280"/>'
+                . '<rect x="576" y="278" width="98" height="10" rx="5" fill="#9ca3af"/></g>';
+        } elseif ($category === 'flyers' || $category === 'posters') {
+            $mockup = '<rect x="574" y="156" width="220" height="306" rx="10" fill="#ffffff" opacity="0.94"/>'
+                . '<rect x="596" y="192" width="176" height="84" rx="8" fill="#FF6600" opacity="0.92"/>'
+                . '<rect x="596" y="292" width="158" height="14" rx="7" fill="#111827" opacity="0.8"/>'
+                . '<rect x="596" y="318" width="132" height="12" rx="6" fill="#6b7280" opacity="0.7"/>'
+                . '<rect x="596" y="340" width="108" height="12" rx="6" fill="#9ca3af" opacity="0.7"/>';
+        } elseif ($category === 'signage' || $category === 'wedding') {
+            $mockup = '<rect x="548" y="176" width="260" height="180" rx="8" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>'
+                . '<rect x="574" y="208" width="210" height="24" rx="8" fill="rgba(255,255,255,0.2)"/>'
+                . '<rect x="574" y="242" width="150" height="12" rx="6" fill="rgba(255,255,255,0.14)"/>'
+                . '<rect x="628" y="364" width="100" height="10" rx="5" fill="rgba(255,255,255,0.26)"/>';
+        }
+
+        $logo_image = '';
+        if ($logo_url !== '') {
+            $logo_image = '<image x="590" y="376" width="74" height="74" href="' . self::svg_escape($logo_url) . '" preserveAspectRatio="xMidYMid meet" />';
+        }
 
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640">'
             . '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">'
@@ -792,6 +822,8 @@ class SBHA_Products {
             . '<circle cx="206" cy="182" r="11" fill="#FDBA2D"/>'
             . '<rect x="150" y="238" width="660" height="16" rx="8" fill="rgba(255,255,255,0.18)"/>'
             . '<rect x="150" y="268" width="510" height="12" rx="6" fill="rgba(255,255,255,0.14)"/>'
+            . $mockup
+            . $logo_image
             . '<rect x="150" y="468" width="256" height="60" rx="12" fill="#FF6600"/>'
             . '<text x="170" y="506" font-size="30" font-weight="700" fill="#fff">View Options</text>'
             . '<text x="150" y="352" font-size="54" font-weight="800" fill="#ffffff" font-family="Inter,Arial,sans-serif">' . self::svg_escape($title) . '</text>'
