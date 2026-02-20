@@ -151,7 +151,7 @@ $testimonials = array(
 			<div class="sgt-grid sgt-grid-3">
 				<?php foreach ( $testimonials as $testimonial ) : ?>
 					<article class="sgt-testimonial-card">
-						<p class="sgt-quote">“<?php echo esc_html( $testimonial['text'] ); ?>”</p>
+						<p class="sgt-quote">"<?php echo esc_html( $testimonial['text'] ); ?>"</p>
 						<h3><?php echo esc_html( $testimonial['name'] ); ?></h3>
 						<p class="sgt-testimonial-role"><?php echo esc_html( $testimonial['role'] ); ?></p>
 					</article>

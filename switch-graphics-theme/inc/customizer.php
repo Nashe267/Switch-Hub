@@ -66,7 +66,7 @@ function switch_graphics_get_defaults() {
 		'newsletter_button'    => 'Send',
 		'newsletter_shortcode' => '',
 		'footer_about'         => 'Switch Graphics creates premium print solutions for businesses, creatives, and events of every size.',
-		'footer_copyright'     => '© ' . gmdate( 'Y' ) . ' Switch Graphics. All Rights Reserved.',
+		'footer_copyright'     => 'Copyright ' . gmdate( 'Y' ) . ' Switch Graphics. All Rights Reserved.',
 	);
 }
 
