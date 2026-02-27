@@ -3,8 +3,8 @@ Theme Name: Switch Graphics
 Theme URI: https://www.switchgraphics.co.za/
 Author: Switch Graphics (Pty) Ltd
 Author URI: https://www.switchgraphics.co.za/
-Description: Mobile-first WordPress theme with a full-screen side menu and editable branded footer text.
-Version: 1.0.0
+Description: Mobile-first WordPress theme with a centered menu popup and editable branded footer text.
+Version: 1.0.1
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
@@ -18,10 +18,13 @@ Text Domain: switch-graphics
     --sg-muted: #666666;
     --sg-border: #dedede;
     --sg-accent: #ff6600;
+    --sg-header-grad-start: #0f0f0f;
+    --sg-header-grad-end: #3a3a3a;
     --sg-menu-fill-start: #ff6600;
     --sg-menu-fill-end: #ff8533;
     --sg-menu-outline-color: #666666;
     --sg-menu-outline-width: 1px;
+    --sg-footer-link: #2c5db1;
 }
 
 * {
@@ -54,7 +57,7 @@ body.sg-menu-open {
     justify-content: space-between;
     gap: 12px;
     padding: 14px 16px;
-    background: #111;
+    background: linear-gradient(180deg, var(--sg-header-grad-start), var(--sg-header-grad-end));
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -92,22 +95,23 @@ body.sg-menu-open {
 .sg-menu-btn {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
-    border: var(--sg-menu-outline-width) solid var(--sg-menu-outline-color);
+    border-radius: 10px;
+    border: none;
     background: transparent;
     display: inline-flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
     padding: 0;
 }
 
 .sg-menu-btn span {
-    width: 21px;
-    height: 2px;
-    border-radius: 2px;
+    width: 24px;
+    height: 4px;
+    border-radius: 999px;
+    border: var(--sg-menu-outline-width) solid var(--sg-menu-outline-color);
     background: linear-gradient(90deg, var(--sg-menu-fill-start), var(--sg-menu-fill-end));
 }
 
@@ -128,20 +132,27 @@ body.sg-menu-open {
 
 .sg-side-menu {
     position: fixed;
-    top: 0;
-    right: 0;
-    width: 100%;
-    height: 100vh;
+    top: 50%;
+    left: 50%;
+    width: min(92vw, 560px);
+    max-height: 82vh;
     background: #fff;
     z-index: 1400;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    padding: 20px 16px;
+    transform: translate(-50%, -45%) scale(0.97);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.22s ease;
+    padding: 20px 16px 16px;
     overflow-y: auto;
+    border-radius: 18px;
+    border: 1px solid var(--sg-border);
+    box-shadow: 0 25px 55px rgba(0, 0, 0, 0.28);
 }
 
 .sg-side-menu.is-open {
-    transform: translateX(0);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .sg-side-menu-header {
@@ -268,7 +279,7 @@ body.sg-menu-open {
 }
 
 .sg-footer a {
-    color: #2c5db1;
+    color: var(--sg-footer-link);
     text-decoration: none;
     font-weight: 700;
 }

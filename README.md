@@ -15,6 +15,7 @@ After activating:
 2. Open **Appearance > Customize**:
    - **Menu (burger)** section:
      - Menu title
+     - Header gradient start/end
      - Menu icon fill (gradient start/end)
      - Menu icon outline color
      - Menu icon outline thickness
@@ -22,7 +23,8 @@ After activating:
      - Footer year
      - Footer company name
      - Footer company link
+     - Footer link text color
 
-The theme menu opens from the right side and covers the full screen.
+The theme menu opens as a centered popup modal with an `X` close button.
 Footer output is:
 `<year> © Designed & Powered By: <company link>`
