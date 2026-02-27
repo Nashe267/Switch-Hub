@@ -18,7 +18,7 @@ Use shortcode:
 
 Plugin settings:
 
-- **Settings > Switch Digital Card**
+- **Dashboard > Switch Digital Card** (left admin menu)
 - Configure:
   - slide image URLs
   - contact/social/menu/custom links

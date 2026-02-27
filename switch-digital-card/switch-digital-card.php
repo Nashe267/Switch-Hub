@@ -3,7 +3,7 @@
  * Plugin Name: Switch Digital Card
  * Plugin URI:  https://www.switchgraphics.co.za/
  * Description: Mobile-first digital card with slideshow, share actions, custom links, menu links, and viewport-fit layout.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Switch Graphics (Pty) Ltd
  * Author URI:  https://www.switchgraphics.co.za/
  * Text Domain: switch-digital-card
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 
 final class Switch_Digital_Card {
     const OPTION_KEY = 'sdc_options';
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
 
     /**
      * @var Switch_Digital_Card|null
@@ -78,8 +78,9 @@ final class Switch_Digital_Card {
             'top_fade_start' => 'rgba(0,0,0,0.85)',
             'top_fade_end' => 'rgba(0,0,0,0)',
             'top_fade_height' => 92,
-            'shape_gradient_path' => 'M0,190 L0,176 C125,144 248,206 404,182 C559,158 639,94 760,62 C883,28 952,64 1000,126 L1000,190 Z',
-            'shape_black_path' => 'M660,190 L660,168 C723,126 782,66 851,42 C916,21 968,49 1000,86 L1000,190 Z',
+            'shape_gradient_path' => 'M0,190 L0,82 C120,56 260,120 405,142 C550,162 650,108 760,98 C860,90 930,64 1000,72 L1000,190 Z',
+            'shape_black_path' => 'M700,190 L700,154 C760,122 822,74 888,58 C942,46 976,70 1000,92 L1000,190 Z',
+            'actions_shift_down' => 28,
             'button_height' => 50,
             'button_font_size' => 13,
             'button_font_weight' => 900,
@@ -140,6 +141,7 @@ final class Switch_Digital_Card {
         $out['top_fade_height'] = $this->sanitize_int_in_range($input['top_fade_height'] ?? $defaults['top_fade_height'], 20, 220, $defaults['top_fade_height']);
         $out['shape_gradient_path'] = $this->sanitize_svg_path($input['shape_gradient_path'] ?? $defaults['shape_gradient_path'], $defaults['shape_gradient_path']);
         $out['shape_black_path'] = $this->sanitize_svg_path($input['shape_black_path'] ?? $defaults['shape_black_path'], $defaults['shape_black_path']);
+        $out['actions_shift_down'] = $this->sanitize_int_in_range($input['actions_shift_down'] ?? $defaults['actions_shift_down'], 0, 220, $defaults['actions_shift_down']);
 
         $out['button_height'] = $this->sanitize_int_in_range($input['button_height'] ?? $defaults['button_height'], 36, 80, $defaults['button_height']);
         $out['button_font_size'] = $this->sanitize_int_in_range($input['button_font_size'] ?? $defaults['button_font_size'], 10, 24, $defaults['button_font_size']);
@@ -229,12 +231,14 @@ final class Switch_Digital_Card {
     }
 
     public function register_admin_page() {
-        add_options_page(
+        add_menu_page(
             __('Switch Digital Card', 'switch-digital-card'),
             __('Switch Digital Card', 'switch-digital-card'),
             'manage_options',
             'switch-digital-card',
-            array($this, 'render_admin_page')
+            array($this, 'render_admin_page'),
+            'dashicons-id-alt',
+            58
         );
     }
 
@@ -287,6 +291,7 @@ final class Switch_Digital_Card {
                     <?php $this->number_input_row('wave_height', 'Wave height (px)', $opts['wave_height']); ?>
                     <?php $this->textarea_row('shape_gradient_path', 'Shape path (gradient)', $opts['shape_gradient_path'], 'SVG path d-attribute for the main shape'); ?>
                     <?php $this->textarea_row('shape_black_path', 'Shape path (black overlay)', $opts['shape_black_path'], 'SVG path d-attribute for black overlay hump'); ?>
+                    <?php $this->number_input_row('actions_shift_down', 'Actions shift down (px)', $opts['actions_shift_down']); ?>
                 </table>
 
                 <h2><?php esc_html_e('Button Sizing & Typography', 'switch-digital-card'); ?></h2>
@@ -482,6 +487,7 @@ final class Switch_Digital_Card {
             '--sdc-top-fade-start:' . $opts['top_fade_start'],
             '--sdc-top-fade-end:' . $opts['top_fade_end'],
             '--sdc-top-fade-height:' . ((int) $opts['top_fade_height']) . 'px',
+            '--sdc-actions-shift:' . ((int) $opts['actions_shift_down']) . 'px',
             '--sdc-pill-height:' . ((int) $opts['button_height']) . 'px',
             '--sdc-pill-font-size:' . ((int) $opts['button_font_size']) . 'px',
             '--sdc-pill-font-weight:' . ((int) $opts['button_font_weight']),

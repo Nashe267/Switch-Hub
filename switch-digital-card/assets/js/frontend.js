@@ -17,9 +17,6 @@
             return;
         }
 
-        const designWidth = safeNum(config.designWidth, 390);
-        const designHeight = safeNum(config.designHeight, 860);
-
         if (config.lockPageScroll) {
             document.documentElement.classList.add('sdc-no-scroll');
             document.body.classList.add('sdc-no-scroll');
@@ -32,18 +29,25 @@
         bindShare(root, config);
 
         function fit() {
-            const top = root.getBoundingClientRect().top;
             const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            let top = root.getBoundingClientRect().top;
 
             let available;
             if (config.fitBetweenHeaderFooter) {
+                const headerBottom = getHeaderBottom(root);
+                if (top > headerBottom + 1) {
+                    root.style.marginTop = (headerBottom - top) + 'px';
+                    top = root.getBoundingClientRect().top;
+                }
+
                 const footerInfo = getFooterInfo(root);
-                if (footerInfo) {
-                    available = Math.floor(viewportHeight - top - footerInfo.height);
+                if (footerInfo && footerInfo.top > top) {
+                    available = Math.floor(footerInfo.top - top);
                 } else {
                     available = Math.floor(viewportHeight - top);
                 }
             } else {
+                root.style.marginTop = '0px';
                 available = Math.floor(viewportHeight - top);
             }
 
@@ -52,10 +56,9 @@
             }
             available = Math.max(320, available);
 
-            const scale = Math.min(window.innerWidth / designWidth, available / designHeight);
             root.style.setProperty('--sdc-root-h', available + 'px');
             root.style.height = available + 'px';
-            stage.style.transform = 'translateX(-50%) scale(' + scale + ')';
+            stage.style.transform = 'none';
         }
 
         fit();
@@ -316,6 +319,29 @@
         });
 
         return merged;
+    }
+
+    function getHeaderBottom(root) {
+        const selectors = '.elementor-location-header, .site-header, header.site-header, #masthead, header';
+        let bestBottom = 0;
+
+        document.querySelectorAll(selectors).forEach((el) => {
+            if (root.contains(el)) {
+                return;
+            }
+            const rect = el.getBoundingClientRect();
+            if (rect.height <= 0) {
+                return;
+            }
+            if (rect.top > window.innerHeight * 0.5) {
+                return;
+            }
+            if (rect.bottom > bestBottom) {
+                bestBottom = rect.bottom;
+            }
+        });
+
+        return bestBottom > 0 ? bestBottom : 0;
     }
 
     function getFooterInfo(root) {
