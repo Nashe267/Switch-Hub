@@ -8,6 +8,15 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+$footer_year          = trim( (string) switch_graphics_get_theme_mod( 'footer_year' ) );
+$footer_powered_label = switch_graphics_get_theme_mod( 'footer_powered_label' );
+$footer_brand_text    = switch_graphics_get_theme_mod( 'footer_brand_text' );
+$footer_brand_url     = switch_graphics_get_theme_mod( 'footer_brand_url' );
+
+if ( '' === $footer_year ) {
+	$footer_year = gmdate( 'Y' );
+}
 ?>
 	</div><!-- #content -->
 
@@ -83,7 +92,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<div class="footer-bottom">
 			<div class="container">
-				<p><?php echo esc_html( switch_graphics_get_theme_mod( 'footer_copyright' ) ); ?></p>
+				<p class="footer-credit">
+					<strong><?php echo esc_html( $footer_year ); ?> &copy;</strong>
+					<?php if ( $footer_powered_label ) : ?>
+						<?php echo esc_html( $footer_powered_label ); ?>
+					<?php endif; ?>
+					<?php if ( $footer_brand_text ) : ?>
+						<?php if ( $footer_brand_url ) : ?>
+							<a class="footer-brand-link" href="<?php echo esc_url( $footer_brand_url ); ?>" target="_blank" rel="noopener">
+								<?php echo esc_html( $footer_brand_text ); ?>
+							</a>
+						<?php else : ?>
+							<span class="footer-brand-link"><?php echo esc_html( $footer_brand_text ); ?></span>
+						<?php endif; ?>
+					<?php else : ?>
+						<?php echo esc_html( switch_graphics_get_theme_mod( 'footer_copyright' ) ); ?>
+					<?php endif; ?>
+				</p>
 			</div>
 		</div>
 	</footer>

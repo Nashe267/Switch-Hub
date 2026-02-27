@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'SWITCH_GRAPHICS_THEME_VERSION' ) ) {
-	define( 'SWITCH_GRAPHICS_THEME_VERSION', '1.0.0' );
+	define( 'SWITCH_GRAPHICS_THEME_VERSION', '1.1.0' );
 }
 
 require get_template_directory() . '/inc/customizer.php';
@@ -108,13 +108,24 @@ function switch_graphics_theme_scripts() {
 	$accent_dark_color = sanitize_hex_color( switch_graphics_get_theme_mod( 'accent_dark_color' ) );
 	$surface_color     = sanitize_hex_color( switch_graphics_get_theme_mod( 'surface_color' ) );
 	$text_color        = sanitize_hex_color( switch_graphics_get_theme_mod( 'text_color' ) );
+	$menu_icon_start   = sanitize_hex_color( switch_graphics_get_theme_mod( 'menu_icon_start' ) );
+	$menu_icon_end     = sanitize_hex_color( switch_graphics_get_theme_mod( 'menu_icon_end' ) );
+	$menu_icon_outline = sanitize_hex_color( switch_graphics_get_theme_mod( 'menu_icon_outline_color' ) );
+
+	$outline_width = absint( switch_graphics_get_theme_mod( 'menu_icon_outline_thickness' ) );
+	if ( $outline_width > 8 ) {
+		$outline_width = 8;
+	}
 
 	$accent_color      = $accent_color ? $accent_color : switch_graphics_get_default( 'accent_color' );
 	$accent_dark_color = $accent_dark_color ? $accent_dark_color : switch_graphics_get_default( 'accent_dark_color' );
 	$surface_color     = $surface_color ? $surface_color : switch_graphics_get_default( 'surface_color' );
 	$text_color        = $text_color ? $text_color : switch_graphics_get_default( 'text_color' );
+	$menu_icon_start   = $menu_icon_start ? $menu_icon_start : switch_graphics_get_default( 'menu_icon_start' );
+	$menu_icon_end     = $menu_icon_end ? $menu_icon_end : switch_graphics_get_default( 'menu_icon_end' );
+	$menu_icon_outline = $menu_icon_outline ? $menu_icon_outline : switch_graphics_get_default( 'menu_icon_outline_color' );
 
-	$inline_css = ":root{--sgt-accent:{$accent_color};--sgt-accent-dark:{$accent_dark_color};--sgt-surface:{$surface_color};--sgt-text:{$text_color};}";
+	$inline_css = ":root{--sgt-accent:{$accent_color};--sgt-accent-dark:{$accent_dark_color};--sgt-surface:{$surface_color};--sgt-text:{$text_color};--sgt-menu-icon-start:{$menu_icon_start};--sgt-menu-icon-end:{$menu_icon_end};--sgt-menu-icon-outline-color:{$menu_icon_outline};--sgt-menu-icon-outline-width:{$outline_width}px;}";
 	wp_add_inline_style( 'switch-graphics-theme', $inline_css );
 
 	wp_enqueue_script(

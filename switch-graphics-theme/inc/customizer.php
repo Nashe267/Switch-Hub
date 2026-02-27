@@ -20,6 +20,11 @@ function switch_graphics_get_defaults() {
 		'phone'                => '+1 (111) 222-3333',
 		'email'                => 'hello@switchgraphics.com',
 		'address'              => '308 Berrier Ave, Lexington, New York',
+		'menu_panel_title'     => 'Switch Hub',
+		'menu_icon_start'      => '#f25743',
+		'menu_icon_end'        => '#f9a826',
+		'menu_icon_outline_color' => '#8f2300',
+		'menu_icon_outline_thickness' => '1',
 		'accent_color'         => '#f25743',
 		'accent_dark_color'    => '#c9412f',
 		'surface_color'        => '#0f172a',
@@ -66,6 +71,10 @@ function switch_graphics_get_defaults() {
 		'newsletter_button'    => 'Send',
 		'newsletter_shortcode' => '',
 		'footer_about'         => 'Switch Graphics creates premium print solutions for businesses, creatives, and events of every size.',
+		'footer_year'          => gmdate( 'Y' ),
+		'footer_powered_label' => 'Designed & Powered By:',
+		'footer_brand_text'    => 'Switch Graphics (Pty) Ltd',
+		'footer_brand_url'     => 'https://www.switchgraphics.co.za/',
 		'footer_copyright'     => 'Copyright ' . gmdate( 'Y' ) . ' Switch Graphics. All Rights Reserved.',
 	);
 }
@@ -99,6 +108,22 @@ function switch_graphics_get_theme_mod( $key ) {
  */
 function switch_graphics_sanitize_icon_class( $input ) {
 	return trim( preg_replace( '/[^a-zA-Z0-9\-\s]/', '', (string) $input ) );
+}
+
+/**
+ * Sanitize menu icon outline thickness.
+ *
+ * @param mixed $input Raw value.
+ * @return int
+ */
+function switch_graphics_sanitize_outline_thickness( $input ) {
+	$value = absint( $input );
+
+	if ( $value > 8 ) {
+		$value = 8;
+	}
+
+	return $value;
 }
 
 /**
@@ -248,11 +273,111 @@ function switch_graphics_customize_register( $wp_customize ) {
 	}
 
 	$wp_customize->add_section(
+		'switch_graphics_menu',
+		array(
+			'title'    => __( 'Menu Styles', 'switch-graphics-theme' ),
+			'panel'    => 'switch_graphics_theme_options',
+			'priority' => 3,
+		)
+	);
+
+	$wp_customize->add_setting(
+		'switch_graphics_menu_panel_title',
+		array(
+			'default'           => switch_graphics_get_default( 'menu_panel_title' ),
+			'sanitize_callback' => 'sanitize_text_field',
+		)
+	);
+	$wp_customize->add_control(
+		'switch_graphics_menu_panel_title',
+		array(
+			'label'   => __( 'Menu Panel Title', 'switch-graphics-theme' ),
+			'section' => 'switch_graphics_menu',
+			'type'    => 'text',
+		)
+	);
+
+	$wp_customize->add_setting(
+		'switch_graphics_menu_icon_start',
+		array(
+			'default'           => switch_graphics_get_default( 'menu_icon_start' ),
+			'sanitize_callback' => 'sanitize_hex_color',
+		)
+	);
+	$wp_customize->add_control(
+		new WP_Customize_Color_Control(
+			$wp_customize,
+			'switch_graphics_menu_icon_start',
+			array(
+				'label'   => __( 'Menu Icon Fill (Gradient Start)', 'switch-graphics-theme' ),
+				'section' => 'switch_graphics_menu',
+			)
+		)
+	);
+
+	$wp_customize->add_setting(
+		'switch_graphics_menu_icon_end',
+		array(
+			'default'           => switch_graphics_get_default( 'menu_icon_end' ),
+			'sanitize_callback' => 'sanitize_hex_color',
+		)
+	);
+	$wp_customize->add_control(
+		new WP_Customize_Color_Control(
+			$wp_customize,
+			'switch_graphics_menu_icon_end',
+			array(
+				'label'   => __( 'Menu Icon Fill (Gradient End)', 'switch-graphics-theme' ),
+				'section' => 'switch_graphics_menu',
+			)
+		)
+	);
+
+	$wp_customize->add_setting(
+		'switch_graphics_menu_icon_outline_color',
+		array(
+			'default'           => switch_graphics_get_default( 'menu_icon_outline_color' ),
+			'sanitize_callback' => 'sanitize_hex_color',
+		)
+	);
+	$wp_customize->add_control(
+		new WP_Customize_Color_Control(
+			$wp_customize,
+			'switch_graphics_menu_icon_outline_color',
+			array(
+				'label'   => __( 'Menu Icon Outline Color', 'switch-graphics-theme' ),
+				'section' => 'switch_graphics_menu',
+			)
+		)
+	);
+
+	$wp_customize->add_setting(
+		'switch_graphics_menu_icon_outline_thickness',
+		array(
+			'default'           => switch_graphics_get_default( 'menu_icon_outline_thickness' ),
+			'sanitize_callback' => 'switch_graphics_sanitize_outline_thickness',
+		)
+	);
+	$wp_customize->add_control(
+		'switch_graphics_menu_icon_outline_thickness',
+		array(
+			'label'       => __( 'Menu Icon Outline Thickness (px)', 'switch-graphics-theme' ),
+			'section'     => 'switch_graphics_menu',
+			'type'        => 'number',
+			'input_attrs' => array(
+				'min'  => 0,
+				'max'  => 8,
+				'step' => 1,
+			),
+		)
+	);
+
+	$wp_customize->add_section(
 		'switch_graphics_hero',
 		array(
 			'title'    => __( 'Hero Section', 'switch-graphics-theme' ),
 			'panel'    => 'switch_graphics_theme_options',
-			'priority' => 3,
+			'priority' => 4,
 		)
 	);
 
@@ -568,8 +693,12 @@ function switch_graphics_customize_register( $wp_customize ) {
 	);
 
 	$footer_settings = array(
-		'footer_about'     => array( __( 'Footer About Text', 'switch-graphics-theme' ), 'textarea', 'sanitize_textarea_field' ),
-		'footer_copyright' => array( __( 'Copyright Text', 'switch-graphics-theme' ), 'text', 'sanitize_text_field' ),
+		'footer_about'         => array( __( 'Footer About Text', 'switch-graphics-theme' ), 'textarea', 'sanitize_textarea_field' ),
+		'footer_year'          => array( __( 'Footer Year', 'switch-graphics-theme' ), 'text', 'sanitize_text_field' ),
+		'footer_powered_label' => array( __( 'Footer Label Before Brand', 'switch-graphics-theme' ), 'text', 'sanitize_text_field' ),
+		'footer_brand_text'    => array( __( 'Footer Brand Text', 'switch-graphics-theme' ), 'text', 'sanitize_text_field' ),
+		'footer_brand_url'     => array( __( 'Footer Brand Link URL', 'switch-graphics-theme' ), 'url', 'esc_url_raw' ),
+		'footer_copyright'     => array( __( 'Legacy Copyright Text (fallback)', 'switch-graphics-theme' ), 'text', 'sanitize_text_field' ),
 	);
 
 	foreach ( $footer_settings as $key => $config ) {

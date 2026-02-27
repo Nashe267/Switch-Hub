@@ -67,32 +67,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<?php endif; ?>
 				</div>
 
-				<button class="menu-toggle" aria-controls="primary-menu" aria-expanded="false">
+				<button class="menu-toggle" type="button" aria-controls="site-navigation" aria-expanded="false">
 					<span class="screen-reader-text"><?php esc_html_e( 'Toggle navigation', 'switch-graphics-theme' ); ?></span>
-					<i class="fa-solid fa-bars" aria-hidden="true"></i>
+					<span class="menu-toggle__bars" aria-hidden="true">
+						<span class="menu-toggle__bar"></span>
+						<span class="menu-toggle__bar"></span>
+						<span class="menu-toggle__bar"></span>
+					</span>
 				</button>
 
 				<nav id="site-navigation" class="main-navigation" aria-label="<?php esc_attr_e( 'Primary menu', 'switch-graphics-theme' ); ?>">
-					<?php
-					if ( has_nav_menu( 'primary' ) ) {
-						wp_nav_menu(
-							array(
-								'theme_location' => 'primary',
-								'menu_id'        => 'primary-menu',
-								'menu_class'     => 'menu-list',
-								'container'      => false,
-							)
-						);
-					} else {
-						wp_page_menu(
-							array(
-								'menu_id'    => 'primary-menu',
-								'menu_class' => 'menu-list',
-								'show_home'  => true,
-							)
-						);
-					}
-					?>
+					<div class="menu-backdrop" data-menu-close="1"></div>
+					<div class="menu-panel" role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Site menu', 'switch-graphics-theme' ); ?>">
+						<div class="menu-panel__head">
+							<p class="menu-panel__title"><?php echo esc_html( switch_graphics_get_theme_mod( 'menu_panel_title' ) ); ?></p>
+							<button class="menu-close" type="button" aria-label="<?php esc_attr_e( 'Close menu', 'switch-graphics-theme' ); ?>">
+								<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+							</button>
+						</div>
+
+						<?php
+						if ( has_nav_menu( 'primary' ) ) {
+							wp_nav_menu(
+								array(
+									'theme_location' => 'primary',
+									'menu_id'        => 'primary-menu',
+									'menu_class'     => 'menu-list',
+									'container'      => false,
+								)
+							);
+						} else {
+							wp_page_menu(
+								array(
+									'menu_id'    => 'primary-menu',
+									'menu_class' => 'menu-list',
+									'show_home'  => true,
+								)
+							);
+						}
+						?>
+					</div>
 				</nav>
 			</div>
 		</div>
