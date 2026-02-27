@@ -50,12 +50,63 @@ function sg_sanitize_outline_width($value) {
     return (string) $value;
 }
 
+function sg_sanitize_css_color($value) {
+    $value = trim((string) $value);
+    if ($value === '') {
+        return '';
+    }
+
+    if (strtolower($value) === 'transparent') {
+        return 'transparent';
+    }
+
+    if (preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/', $value)) {
+        return $value;
+    }
+
+    if (!preg_match('/^rgba?\((.+)\)$/i', $value, $matches)) {
+        return '';
+    }
+
+    $parts = array_map('trim', explode(',', $matches[1]));
+    $part_count = count($parts);
+    if ($part_count !== 3 && $part_count !== 4) {
+        return '';
+    }
+
+    $channels = array();
+    for ($i = 0; $i < 3; $i++) {
+        if (!ctype_digit($parts[$i])) {
+            return '';
+        }
+        $channel = (int) $parts[$i];
+        if ($channel < 0 || $channel > 255) {
+            return '';
+        }
+        $channels[] = (string) $channel;
+    }
+
+    if ($part_count === 3) {
+        return 'rgb(' . implode(',', $channels) . ')';
+    }
+
+    if (!is_numeric($parts[3])) {
+        return '';
+    }
+    $alpha = (float) $parts[3];
+    if ($alpha < 0 || $alpha > 1) {
+        return '';
+    }
+
+    return 'rgba(' . implode(',', $channels) . ',' . rtrim(rtrim(sprintf('%.3F', $alpha), '0'), '.') . ')';
+}
+
 function sg_enqueue_assets() {
     wp_enqueue_style('switch-graphics-style', get_stylesheet_uri(), array(), wp_get_theme()->get('Version'));
     wp_enqueue_script('switch-graphics-theme', get_template_directory_uri() . '/assets/theme.js', array(), wp_get_theme()->get('Version'), true);
 
-    $header_grad_start = sanitize_hex_color(sg_theme_mod('header_gradient_start'));
-    $header_grad_end = sanitize_hex_color(sg_theme_mod('header_gradient_end'));
+    $header_grad_start = sg_sanitize_css_color(sg_theme_mod('header_gradient_start'));
+    $header_grad_end = sg_sanitize_css_color(sg_theme_mod('header_gradient_end'));
     $fill_start = sanitize_hex_color(sg_theme_mod('menu_icon_fill_start'));
     $fill_end = sanitize_hex_color(sg_theme_mod('menu_icon_fill_end'));
     $outline_color = sanitize_hex_color(sg_theme_mod('menu_icon_outline_color'));
@@ -115,17 +166,16 @@ function sg_customize_register($wp_customize) {
         'header_gradient_start',
         array(
             'default' => sg_theme_defaults()['header_gradient_start'],
-            'sanitize_callback' => 'sanitize_hex_color',
+            'sanitize_callback' => 'sg_sanitize_css_color',
         )
     );
     $wp_customize->add_control(
-        new WP_Customize_Color_Control(
-            $wp_customize,
-            'header_gradient_start',
-            array(
-                'label' => __('Header gradient start', 'switch-graphics'),
-                'section' => 'sg_menu_section',
-            )
+        'header_gradient_start',
+        array(
+            'type' => 'text',
+            'label' => __('Header gradient start', 'switch-graphics'),
+            'description' => __('Supports hex, rgb(), rgba(), or transparent.', 'switch-graphics'),
+            'section' => 'sg_menu_section',
         )
     );
 
@@ -133,17 +183,16 @@ function sg_customize_register($wp_customize) {
         'header_gradient_end',
         array(
             'default' => sg_theme_defaults()['header_gradient_end'],
-            'sanitize_callback' => 'sanitize_hex_color',
+            'sanitize_callback' => 'sg_sanitize_css_color',
         )
     );
     $wp_customize->add_control(
-        new WP_Customize_Color_Control(
-            $wp_customize,
-            'header_gradient_end',
-            array(
-                'label' => __('Header gradient end', 'switch-graphics'),
-                'section' => 'sg_menu_section',
-            )
+        'header_gradient_end',
+        array(
+            'type' => 'text',
+            'label' => __('Header gradient end', 'switch-graphics'),
+            'description' => __('Supports hex, rgb(), rgba(), or transparent.', 'switch-graphics'),
+            'section' => 'sg_menu_section',
         )
     );
 

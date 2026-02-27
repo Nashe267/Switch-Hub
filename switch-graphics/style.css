@@ -4,7 +4,7 @@ Theme URI: https://www.switchgraphics.co.za/
 Author: Switch Graphics (Pty) Ltd
 Author URI: https://www.switchgraphics.co.za/
 Description: Mobile-first WordPress theme with a centered menu popup and editable branded footer text.
-Version: 1.0.1
+Version: 1.0.2
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
@@ -58,7 +58,7 @@ body.sg-menu-open {
     gap: 12px;
     padding: 14px 16px;
     background: linear-gradient(180deg, var(--sg-header-grad-start), var(--sg-header-grad-end));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
 }
 
 .admin-bar .sg-header {

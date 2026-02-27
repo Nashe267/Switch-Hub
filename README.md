@@ -15,7 +15,7 @@ After activating:
 2. Open **Appearance > Customize**:
    - **Menu (burger)** section:
      - Menu title
-     - Header gradient start/end
+     - Header gradient start/end (supports hex, rgb, rgba, or `transparent`)
      - Menu icon fill (gradient start/end)
      - Menu icon outline color
      - Menu icon outline thickness
