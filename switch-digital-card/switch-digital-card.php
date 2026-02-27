@@ -3,7 +3,7 @@
  * Plugin Name: Switch Digital Card
  * Plugin URI:  https://www.switchgraphics.co.za/
  * Description: Mobile-first digital card with slideshow, share actions, custom links, menu links, and viewport-fit layout.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      Switch Graphics (Pty) Ltd
  * Author URI:  https://www.switchgraphics.co.za/
  * Text Domain: switch-digital-card
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 
 final class Switch_Digital_Card {
     const OPTION_KEY = 'sdc_options';
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
 
     /**
      * @var Switch_Digital_Card|null
@@ -72,15 +72,15 @@ final class Switch_Digital_Card {
             'autoplay_interval' => 3800,
             'cover_height_percent' => 50,
             'wave_height' => 94,
-            'cover_gradient_start' => '#c27410',
+            'cover_gradient_start' => '#000000',
             'cover_gradient_end' => '#000000',
             'wave_color' => '#000000',
             'top_fade_start' => 'rgba(0,0,0,0.85)',
             'top_fade_end' => 'rgba(0,0,0,0)',
             'top_fade_height' => 92,
-            'shape_gradient_path' => 'M0,190 L0,82 C120,56 260,120 405,142 C550,162 650,108 760,98 C860,90 930,64 1000,72 L1000,190 Z',
-            'shape_black_path' => 'M700,190 L700,154 C760,122 822,74 888,58 C942,46 976,70 1000,92 L1000,190 Z',
-            'actions_shift_down' => 28,
+            'shape_gradient_path' => 'M0,190 L0,132 C95,108 240,156 395,152 C548,148 650,123 748,84 C844,46 918,40 1000,52 L1000,190 Z',
+            'shape_black_path' => 'M620,190 L620,170 C700,145 782,97 856,64 C916,38 966,52 1000,78 L1000,190 Z',
+            'actions_shift_down' => 36,
             'button_height' => 50,
             'button_font_size' => 13,
             'button_font_weight' => 900,
@@ -89,7 +89,7 @@ final class Switch_Digital_Card {
             'save_button_width' => 170,
             'design_width' => 390,
             'design_height' => 860,
-            'lock_page_scroll' => 1,
+            'lock_page_scroll' => 0,
             'fit_between_header_footer' => 1,
         );
     }
@@ -275,7 +275,7 @@ final class Switch_Digital_Card {
                     <?php $this->number_input_row('autoplay_interval', 'Slideshow interval (ms)', $opts['autoplay_interval']); ?>
                     <?php $this->number_input_row('design_width', 'Design width (px)', $opts['design_width']); ?>
                     <?php $this->number_input_row('design_height', 'Design height (px)', $opts['design_height']); ?>
-                    <?php $this->checkbox_row('lock_page_scroll', 'Lock page scroll', $opts['lock_page_scroll']); ?>
+                    <?php $this->checkbox_row('lock_page_scroll', 'Lock page scroll (optional)', $opts['lock_page_scroll']); ?>
                     <?php $this->checkbox_row('fit_between_header_footer', 'Fit between header and theme footer', $opts['fit_between_header_footer']); ?>
                 </table>
 

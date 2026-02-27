@@ -5,6 +5,7 @@
 
 .sdc-root {
     --sdc-root-h: 100dvh;
+    --sdc-fit-scale: 1;
     --sdc-cover-height: 50%;
     --sdc-wave-height: 94px;
     --sdc-cover-gradient-start: #c27410;
@@ -17,9 +18,12 @@
     --sdc-social-size: 46px;
     --sdc-save-width: 170px;
 
-    width: 100%;
-    max-width: 100%;
-    margin: 0 !important;
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     height: var(--sdc-root-h);
     max-height: var(--sdc-root-h);
     overflow: hidden;
@@ -52,7 +56,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: var(--sdc-top-fade-height, 92px);
+    height: calc(var(--sdc-top-fade-height, 92px) * var(--sdc-fit-scale));
     background: linear-gradient(180deg, var(--sdc-top-fade-start, rgba(0, 0, 0, 0.85)) 0%, var(--sdc-top-fade-end, rgba(0, 0, 0, 0)) 100%);
     pointer-events: none;
     z-index: 3;
@@ -117,9 +121,9 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(var(--sdc-wave-height) * -0.35);
+    top: calc(var(--sdc-wave-height) * var(--sdc-fit-scale) * -0.58);
     width: 100%;
-    height: var(--sdc-wave-height);
+    height: calc(var(--sdc-wave-height) * var(--sdc-fit-scale));
     z-index: 1;
     pointer-events: none;
 }
@@ -138,7 +142,7 @@
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    margin-top: var(--sdc-actions-shift, 28px);
+    margin-top: calc(var(--sdc-actions-shift, 28px) * var(--sdc-fit-scale));
 }
 
 .sdc-pill {
@@ -147,13 +151,13 @@
     gap: 8px;
     width: fit-content;
     max-width: 96%;
-    min-height: var(--sdc-pill-height);
+    min-height: calc(var(--sdc-pill-height) * var(--sdc-fit-scale));
     padding: 4px 7px;
     border-radius: 999px;
     background: #ffffff;
     color: #111111;
     text-decoration: none;
-    font-size: var(--sdc-pill-font-size);
+    font-size: calc(var(--sdc-pill-font-size) * var(--sdc-fit-scale));
     font-weight: var(--sdc-pill-font-weight);
     letter-spacing: 0.1px;
     line-height: 1;
@@ -161,9 +165,9 @@
 }
 
 .sdc-icon {
-    width: var(--sdc-icon-size);
-    height: var(--sdc-icon-size);
-    min-width: var(--sdc-icon-size);
+    width: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
+    height: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
+    min-width: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
     border-radius: 50%;
     border: 3px solid #ffffff;
     display: inline-flex;
@@ -214,9 +218,9 @@
 }
 
 .sdc-share-btn {
-    width: var(--sdc-icon-size);
-    height: var(--sdc-icon-size);
-    min-width: var(--sdc-icon-size);
+    width: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
+    height: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
+    min-width: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
     border-radius: 50%;
     border: 3px solid #ffffff;
     background: #ffffff;
@@ -258,8 +262,8 @@
 }
 
 .sdc-social {
-    width: var(--sdc-social-size);
-    height: var(--sdc-social-size);
+    width: calc(var(--sdc-social-size) * var(--sdc-fit-scale));
+    height: calc(var(--sdc-social-size) * var(--sdc-fit-scale));
     border-radius: 50%;
     border: 3px solid #ffffff;
     display: inline-flex;
@@ -287,8 +291,8 @@
 }
 
 .sdc-save {
-    width: var(--sdc-save-width);
-    min-width: var(--sdc-save-width);
+    width: calc(var(--sdc-save-width) * var(--sdc-fit-scale));
+    min-width: calc(var(--sdc-save-width) * var(--sdc-fit-scale));
     border: 3px solid #ffffff;
     border-radius: 999px;
     background: #111111;
@@ -305,21 +309,21 @@
     display: flex;
     flex-direction: column;
     line-height: 1.02;
-    font-size: 8px;
+    font-size: calc(8px * var(--sdc-fit-scale));
     letter-spacing: 0.2px;
     font-weight: 900;
 }
 
 .sdc-plus {
-    width: calc(var(--sdc-icon-size));
-    height: calc(var(--sdc-icon-size));
+    width: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
+    height: calc(var(--sdc-icon-size) * var(--sdc-fit-scale));
     border-radius: 50%;
     border: 3px solid #ffffff;
     background: #000000;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
+    font-size: calc(30px * var(--sdc-fit-scale));
     font-weight: 900;
     line-height: 1;
 }

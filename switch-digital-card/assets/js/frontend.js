@@ -16,6 +16,7 @@
         if (!stage) {
             return;
         }
+        const designHeight = safeNum(config.designHeight, 860);
 
         if (config.lockPageScroll) {
             document.documentElement.classList.add('sdc-no-scroll');
@@ -56,7 +57,10 @@
             }
             available = Math.max(320, available);
 
+            const fitScaleRaw = available / designHeight;
+            const fitScale = Math.min(1.12, Math.max(0.72, fitScaleRaw));
             root.style.setProperty('--sdc-root-h', available + 'px');
+            root.style.setProperty('--sdc-fit-scale', String(fitScale));
             root.style.height = available + 'px';
             stage.style.transform = 'none';
         }
