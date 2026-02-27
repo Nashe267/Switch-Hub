@@ -7,7 +7,7 @@
     --sdc-root-h: 100dvh;
     --sdc-cover-height: 50%;
     --sdc-wave-height: 94px;
-    --sdc-cover-gradient-start: #111111;
+    --sdc-cover-gradient-start: #c27410;
     --sdc-cover-gradient-end: #000000;
     --sdc-wave-color: #000000;
     --sdc-pill-height: 50px;
@@ -46,6 +46,18 @@
     inset: 0;
     overflow: hidden;
     background: #2f85b2;
+}
+
+.sdc-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--sdc-top-fade-height, 92px);
+    background: linear-gradient(180deg, var(--sdc-top-fade-start, rgba(0, 0, 0, 0.85)) 0%, var(--sdc-top-fade-end, rgba(0, 0, 0, 0)) 100%);
+    pointer-events: none;
+    z-index: 3;
 }
 
 .sdc-slides {
@@ -110,7 +122,6 @@
     top: calc(var(--sdc-wave-height) * -1 + 2px);
     width: 100%;
     height: var(--sdc-wave-height);
-    color: var(--sdc-wave-color);
     z-index: 1;
     pointer-events: none;
 }

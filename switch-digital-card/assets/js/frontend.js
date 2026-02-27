@@ -37,7 +37,12 @@
 
             let available;
             if (config.fitBetweenHeaderFooter) {
-                available = Math.floor(getFooterTop(root) - top);
+                const footerInfo = getFooterInfo(root);
+                if (footerInfo) {
+                    available = Math.floor(viewportHeight - top - footerInfo.height);
+                } else {
+                    available = Math.floor(viewportHeight - top);
+                }
             } else {
                 available = Math.floor(viewportHeight - top);
             }
@@ -313,19 +318,29 @@
         return merged;
     }
 
-    function getFooterTop(root) {
-        let top = window.innerHeight;
+    function getFooterInfo(root) {
         const selectors = '.elementor-location-footer, footer, #colophon, .site-footer';
+        let best = null;
         document.querySelectorAll(selectors).forEach((el) => {
             if (root.contains(el)) {
                 return;
             }
             const rect = el.getBoundingClientRect();
-            if (rect.top > 80 && rect.top < top) {
-                top = rect.top;
+            if (rect.height <= 0) {
+                return;
+            }
+
+            const candidate = {
+                top: rect.top,
+                height: rect.height
+            };
+
+            if (!best || candidate.top < best.top) {
+                best = candidate;
             }
         });
-        return top;
+
+        return best;
     }
 
     function safeNum(value, fallback) {

@@ -23,6 +23,8 @@ Plugin settings:
   - slide image URLs
   - contact/social/menu/custom links
   - gradient colors and wave color
+  - top fade colors/height
+  - custom SVG shape paths (main + black overlay)
   - button/icon/font sizes
   - mobile fit + no-scroll behavior
 

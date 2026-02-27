@@ -72,9 +72,14 @@ final class Switch_Digital_Card {
             'autoplay_interval' => 3800,
             'cover_height_percent' => 50,
             'wave_height' => 94,
-            'cover_gradient_start' => '#111111',
+            'cover_gradient_start' => '#c27410',
             'cover_gradient_end' => '#000000',
             'wave_color' => '#000000',
+            'top_fade_start' => 'rgba(0,0,0,0.85)',
+            'top_fade_end' => 'rgba(0,0,0,0)',
+            'top_fade_height' => 92,
+            'shape_gradient_path' => 'M0,190 L0,176 C125,144 248,206 404,182 C559,158 639,94 760,62 C883,28 952,64 1000,126 L1000,190 Z',
+            'shape_black_path' => 'M660,190 L660,168 C723,126 782,66 851,42 C916,21 968,49 1000,86 L1000,190 Z',
             'button_height' => 50,
             'button_font_size' => 13,
             'button_font_weight' => 900,
@@ -130,6 +135,11 @@ final class Switch_Digital_Card {
         $out['cover_gradient_start'] = $this->sanitize_css_color($input['cover_gradient_start'] ?? $defaults['cover_gradient_start'], $defaults['cover_gradient_start']);
         $out['cover_gradient_end'] = $this->sanitize_css_color($input['cover_gradient_end'] ?? $defaults['cover_gradient_end'], $defaults['cover_gradient_end']);
         $out['wave_color'] = $this->sanitize_css_color($input['wave_color'] ?? $defaults['wave_color'], $defaults['wave_color']);
+        $out['top_fade_start'] = $this->sanitize_css_color($input['top_fade_start'] ?? $defaults['top_fade_start'], $defaults['top_fade_start']);
+        $out['top_fade_end'] = $this->sanitize_css_color($input['top_fade_end'] ?? $defaults['top_fade_end'], $defaults['top_fade_end']);
+        $out['top_fade_height'] = $this->sanitize_int_in_range($input['top_fade_height'] ?? $defaults['top_fade_height'], 20, 220, $defaults['top_fade_height']);
+        $out['shape_gradient_path'] = $this->sanitize_svg_path($input['shape_gradient_path'] ?? $defaults['shape_gradient_path'], $defaults['shape_gradient_path']);
+        $out['shape_black_path'] = $this->sanitize_svg_path($input['shape_black_path'] ?? $defaults['shape_black_path'], $defaults['shape_black_path']);
 
         $out['button_height'] = $this->sanitize_int_in_range($input['button_height'] ?? $defaults['button_height'], 36, 80, $defaults['button_height']);
         $out['button_font_size'] = $this->sanitize_int_in_range($input['button_font_size'] ?? $defaults['button_font_size'], 10, 24, $defaults['button_font_size']);
@@ -202,6 +212,22 @@ final class Switch_Digital_Card {
         return 'rgba(' . $parts[0] . ',' . $parts[1] . ',' . $parts[2] . ',' . $alpha_text . ')';
     }
 
+    private function sanitize_svg_path($value, $fallback) {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return $fallback;
+        }
+
+        // Allow only SVG path command letters, separators, signs and decimals.
+        $clean = preg_replace('/[^MmZzLlHhVvCcSsQqTtAa0-9,\.\-\s]/', '', $value);
+        $clean = trim((string) $clean);
+        if ($clean === '') {
+            return $fallback;
+        }
+
+        return $clean;
+    }
+
     public function register_admin_page() {
         add_options_page(
             __('Switch Digital Card', 'switch-digital-card'),
@@ -254,8 +280,13 @@ final class Switch_Digital_Card {
                     <?php $this->text_input_row('cover_gradient_start', 'Cover gradient start color', $opts['cover_gradient_start']); ?>
                     <?php $this->text_input_row('cover_gradient_end', 'Cover gradient end color', $opts['cover_gradient_end']); ?>
                     <?php $this->text_input_row('wave_color', 'Wave shape color', $opts['wave_color']); ?>
+                    <?php $this->text_input_row('top_fade_start', 'Top fade start color', $opts['top_fade_start']); ?>
+                    <?php $this->text_input_row('top_fade_end', 'Top fade end color', $opts['top_fade_end']); ?>
+                    <?php $this->number_input_row('top_fade_height', 'Top fade height (px)', $opts['top_fade_height']); ?>
                     <?php $this->number_input_row('cover_height_percent', 'Cover height (% of image area)', $opts['cover_height_percent']); ?>
                     <?php $this->number_input_row('wave_height', 'Wave height (px)', $opts['wave_height']); ?>
+                    <?php $this->textarea_row('shape_gradient_path', 'Shape path (gradient)', $opts['shape_gradient_path'], 'SVG path d-attribute for the main shape'); ?>
+                    <?php $this->textarea_row('shape_black_path', 'Shape path (black overlay)', $opts['shape_black_path'], 'SVG path d-attribute for black overlay hump'); ?>
                 </table>
 
                 <h2><?php esc_html_e('Button Sizing & Typography', 'switch-digital-card'); ?></h2>
@@ -357,6 +388,10 @@ final class Switch_Digital_Card {
         $script = 'window.SDC_CARDS = window.SDC_CARDS || {}; window.SDC_CARDS[' . wp_json_encode($id) . '] = ' . wp_json_encode($config) . ';';
         wp_add_inline_script('sdc-frontend', $script, 'before');
 
+        $grad_id = sanitize_html_class($id . '-grad');
+        $shape_gradient_path = esc_attr($opts['shape_gradient_path']);
+        $shape_black_path = esc_attr($opts['shape_black_path']);
+
         ob_start();
         ?>
         <div id="<?php echo esc_attr($id); ?>" class="sdc-root" style="<?php echo esc_attr($css_vars); ?>">
@@ -368,7 +403,14 @@ final class Switch_Digital_Card {
 
                 <section class="sdc-cover">
                     <svg class="sdc-cover-wave" viewBox="0 0 1000 190" preserveAspectRatio="none" aria-hidden="true">
-                        <path d="M0,190 L0,180 C130,145 255,210 410,184 C560,160 640,96 760,62 C885,26 955,70 1000,128 L1000,190 Z" fill="currentColor"></path>
+                        <defs>
+                            <linearGradient id="<?php echo esc_attr($grad_id); ?>" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stop-color="<?php echo esc_attr($opts['cover_gradient_start']); ?>"></stop>
+                                <stop offset="100%" stop-color="<?php echo esc_attr($opts['cover_gradient_end']); ?>"></stop>
+                            </linearGradient>
+                        </defs>
+                        <path d="<?php echo $shape_gradient_path; ?>" fill="url(#<?php echo esc_attr($grad_id); ?>)"></path>
+                        <path d="<?php echo $shape_black_path; ?>" fill="<?php echo esc_attr($opts['wave_color']); ?>"></path>
                     </svg>
 
                     <div class="sdc-content">
@@ -437,6 +479,9 @@ final class Switch_Digital_Card {
             '--sdc-cover-gradient-start:' . $opts['cover_gradient_start'],
             '--sdc-cover-gradient-end:' . $opts['cover_gradient_end'],
             '--sdc-wave-color:' . $opts['wave_color'],
+            '--sdc-top-fade-start:' . $opts['top_fade_start'],
+            '--sdc-top-fade-end:' . $opts['top_fade_end'],
+            '--sdc-top-fade-height:' . ((int) $opts['top_fade_height']) . 'px',
             '--sdc-pill-height:' . ((int) $opts['button_height']) . 'px',
             '--sdc-pill-font-size:' . ((int) $opts['button_font_size']) . 'px',
             '--sdc-pill-font-weight:' . ((int) $opts['button_font_weight']),
