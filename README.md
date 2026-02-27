@@ -1,22 +1,28 @@
 # Switch-Hub
-WordPress Plugin
 
-## `switch_hub` shortcode quick settings
+This workspace now includes both:
 
-You can customize the new side menu and footer directly in the shortcode:
+- `switch-business-hub-ai-v2.0.0.zip` (plugin)
+- `switch-graphics.zip` (installable WordPress theme)
 
-```text
-[switch_hub
-  menu_title="Switch Hub"
-  menu_icon_fill_start="#FF6600"
-  menu_icon_fill_end="#ff8533"
-  menu_icon_outline_color="#666666"
-  menu_icon_outline_width="2"
-  footer_year="2026"
-  footer_company="Switch Graphics (Pty) Ltd"
-  footer_link="https://www.switchgraphics.co.za/"
-]
-```
+## Theme usage (`switch-graphics.zip`)
 
-- If a WordPress menu is set in **Appearance > Menus**, it will open from the right side in a full-screen overlay.
-- If no WordPress menu is set, fallback links are shown for the built-in app sections.
+Install from **Appearance > Themes > Add New > Upload Theme**.
+
+After activating:
+
+1. Set your WordPress menu in **Appearance > Menus** (location: Primary Menu).
+2. Open **Appearance > Customize**:
+   - **Menu (burger)** section:
+     - Menu title
+     - Menu icon fill (gradient start/end)
+     - Menu icon outline color
+     - Menu icon outline thickness
+   - **Footer Content** section:
+     - Footer year
+     - Footer company name
+     - Footer company link
+
+The theme menu opens from the right side and covers the full screen.
+Footer output is:
+`<year> © Designed & Powered By: <company link>`
