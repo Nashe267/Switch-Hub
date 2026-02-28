@@ -41,7 +41,7 @@
 .sg-dcard-name{font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;position:relative;z-index:1}
 .sg-dcard-tagline{font-size:13px;opacity:0.9;font-weight:500;letter-spacing:1px;text-transform:uppercase;position:relative;z-index:1}
 
-.sg-dcard-body{padding:24px 20px 24px}
+.sg-dcard-body{padding:24px 20px 80px}
 
 .sg-dcard-contact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .sg-dcard-citem{display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 10px;background:#1a1a1a;border-radius:16px;border:1px solid #2a2a2a;text-decoration:none;color:#fff;transition:all 0.3s ease;cursor:pointer}
@@ -85,9 +85,10 @@
 .sg-dcard-hours-row span:last-child{font-weight:600}
 .sg-dcard-hours-row.closed span:last-child{color:#FF5252}
 
-.sg-dcard-social{display:flex;justify-content:center;gap:12px}
-.sg-dcard-social a{width:40px;height:40px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;text-decoration:none;transition:all 0.3s ease}
-.sg-dcard-social a:hover{border-color:#FF6600;background:rgba(255,102,0,0.1);transform:translateY(-2px)}
+.sg-dcard-social{position:fixed;bottom:0;left:0;right:0;z-index:9999;display:flex;justify-content:center;align-items:center;gap:0;background:#0f0f0f;border-top:1px solid #2a2a2a;padding:10px 0 12px;box-shadow:0 -4px 20px rgba(0,0,0,0.5)}
+.sg-dcard-social a{flex:1;max-width:80px;height:48px;background:transparent;border:none;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:22px;text-decoration:none;color:#888;transition:all 0.3s ease}
+.sg-dcard-social a:hover,.sg-dcard-social a:active{color:#FF6600}
+.sg-dcard-social a span{font-size:9px;font-weight:600;letter-spacing:0.3px}
 </style>
 
 <div class="sg-dcard">
@@ -158,13 +159,16 @@
       <a href="#" onclick="(function(){var v='BEGIN:VCARD\nVERSION:3.0\nFN:Switch Graphics\nORG:Switch Graphics (Pty) Ltd\nTEL;TYPE=CELL:+27681474232\nEMAIL:tinashe@switchgraphics.co.za\nADR:;;16 Harding Street;Newcastle;;2940;South Africa\nURL:https://switchgraphics.co.za\nNOTE:Design | Innovation | Identity\nEND:VCARD';var b=new Blob([v],{type:'text/vcard'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='Switch-Graphics.vcf';a.click();URL.revokeObjectURL(u)})();return false;" class="sg-dcard-btn sg-dcard-btn-outline">📇 Save Contact</a>
     </div>
 
-    <div class="sg-dcard-social">
-      <a href="https://facebook.com/switchgraphics" target="_blank" title="Facebook">📘</a>
-      <a href="https://instagram.com/switchgraphics" target="_blank" title="Instagram">📸</a>
-      <a href="https://tiktok.com/@switchgraphics" target="_blank" title="TikTok">🎵</a>
-      <a href="https://wa.me/27681474232" target="_blank" title="WhatsApp">💬</a>
-    </div>
   </div>
+</div>
+
+<!-- Fixed bottom social bar - lives outside card so it stays pinned -->
+<div class="sg-dcard-social">
+  <a href="tel:+27681474232" title="Call">📞<span>Call</span></a>
+  <a href="https://wa.me/27681474232?text=Hi%20Switch%20Graphics!" target="_blank" title="WhatsApp">💬<span>WhatsApp</span></a>
+  <a href="https://www.facebook.com/switchgraphics.co.za" target="_blank" title="Facebook">📘<span>Facebook</span></a>
+  <a href="https://www.instagram.com/switchgraphics.co.za/" target="_blank" title="Instagram">📸<span>Instagram</span></a>
+  <a href="https://www.tiktok.com/@switchgraphics" target="_blank" title="TikTok">🎵<span>TikTok</span></a>
 </div>
 
 <script>
