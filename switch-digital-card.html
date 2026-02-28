@@ -1,8 +1,36 @@
 <!-- Switch Graphics Digital Business Card - Paste into Elementor HTML Widget -->
 <style>
+/* Force all Elementor parent wrappers to have zero padding/margin/gap */
+.elementor-widget-container:has(.sg-dcard),
+.elementor-widget:has(.sg-dcard),
+.elementor-widget-wrap:has(.sg-dcard),
+.elementor-column-wrap:has(.sg-dcard),
+.elementor-column:has(.sg-dcard),
+.elementor-section:has(.sg-dcard),
+.elementor-inner-section:has(.sg-dcard),
+.elementor-section-wrap:has(.sg-dcard),
+.elementor-top-section:has(.sg-dcard),
+.e-con:has(.sg-dcard),
+.e-con-inner:has(.sg-dcard),
+.elementor-element:has(.sg-dcard){
+  padding:0!important;
+  margin:0!important;
+  gap:0!important;
+  max-width:100%!important;
+  width:100%!important;
+  --padding-top:0px!important;
+  --padding-bottom:0px!important;
+  --padding-left:0px!important;
+  --padding-right:0px!important;
+  --padding-inline-start:0px!important;
+  --padding-inline-end:0px!important;
+  --padding-block-start:0px!important;
+  --padding-block-end:0px!important;
+  --container-max-width:100%!important;
+}
+
 .sg-dcard{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;width:100%;background:#0f0f0f;overflow:hidden;color:#fff;-webkit-font-smoothing:antialiased}
 .sg-dcard *{box-sizing:border-box;margin:0;padding:0}
-.sg-dcard .elementor-widget-container,.sg-dcard .elementor-element{padding:0!important;margin:0!important}
 
 .sg-dcard-hero{background:linear-gradient(135deg,#FF6600 0%,#ff8533 50%,#ffaa66 100%);padding:40px 28px 32px;text-align:center;position:relative;overflow:hidden}
 .sg-dcard-hero::before{content:'';position:absolute;top:-40%;right:-30%;width:200px;height:200px;background:rgba(255,255,255,0.08);border-radius:50%}
@@ -63,7 +91,6 @@
 </style>
 
 <div class="sg-dcard">
-  <!-- Hero / Header -->
   <div class="sg-dcard-hero">
     <div class="sg-dcard-logo">SG</div>
     <h2 class="sg-dcard-name">Switch Graphics</h2>
@@ -71,7 +98,6 @@
   </div>
 
   <div class="sg-dcard-body">
-    <!-- Contact Grid -->
     <div class="sg-dcard-contact">
       <a href="tel:+27681474232" class="sg-dcard-citem">
         <div class="sg-dcard-cicon call">📞</div>
@@ -97,7 +123,6 @@
 
     <div class="sg-dcard-divider"></div>
 
-    <!-- Services -->
     <div class="sg-dcard-services-title">What We Do</div>
     <div class="sg-dcard-services">
       <span class="sg-dcard-stag">🎨 Logo Design</span>
@@ -112,7 +137,6 @@
 
     <div class="sg-dcard-divider"></div>
 
-    <!-- Business Hours -->
     <div class="sg-dcard-hours">
       <div class="sg-dcard-hours-title">🕐 Business Hours</div>
       <div class="sg-dcard-hours-row"><span>Monday – Friday</span><span>08:00 – 17:00</span></div>
@@ -120,7 +144,6 @@
       <div class="sg-dcard-hours-row closed"><span>Sunday</span><span>Closed</span></div>
     </div>
 
-    <!-- Banking Details -->
     <div class="sg-dcard-bank">
       <div class="sg-dcard-bank-title">🏦 Banking Details</div>
       <div class="sg-dcard-bank-row"><span>Bank</span><span>FNB / RMB</span></div>
@@ -129,14 +152,12 @@
       <div class="sg-dcard-bank-row"><span>Branch Code</span><span>250 655</span></div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="sg-dcard-actions">
       <a href="https://wa.me/27681474232?text=Hi%20Switch%20Graphics!%20I%27d%20like%20to%20get%20a%20quote%20please." target="_blank" class="sg-dcard-btn sg-dcard-btn-wa">💬 Get a Quote on WhatsApp</a>
       <a href="https://switchgraphics.co.za" target="_blank" class="sg-dcard-btn sg-dcard-btn-primary">🌐 Visit Our Website</a>
       <a href="#" onclick="(function(){var v='BEGIN:VCARD\nVERSION:3.0\nFN:Switch Graphics\nORG:Switch Graphics (Pty) Ltd\nTEL;TYPE=CELL:+27681474232\nEMAIL:tinashe@switchgraphics.co.za\nADR:;;16 Harding Street;Newcastle;;2940;South Africa\nURL:https://switchgraphics.co.za\nNOTE:Design | Innovation | Identity\nEND:VCARD';var b=new Blob([v],{type:'text/vcard'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='Switch-Graphics.vcf';a.click();URL.revokeObjectURL(u)})();return false;" class="sg-dcard-btn sg-dcard-btn-outline">📇 Save Contact</a>
     </div>
 
-    <!-- Social Links -->
     <div class="sg-dcard-social">
       <a href="https://facebook.com/switchgraphics" target="_blank" title="Facebook">📘</a>
       <a href="https://instagram.com/switchgraphics" target="_blank" title="Instagram">📸</a>
@@ -147,5 +168,27 @@
 </div>
 
 <script>
-(function(){var s=document.querySelector('.sg-dcard');if(!s)return;var p=s.closest('.elementor-widget-container');if(p)p.style.padding='0';var w=s.closest('.elementor-widget');if(w)w.style.padding='0';var c=s.closest('.elementor-column-wrap, .elementor-widget-wrap');if(c)c.style.padding='0';var sec=s.closest('.elementor-section');if(sec){sec.style.padding='0';sec.style.margin='0'}var col=s.closest('.elementor-column');if(col)col.style.padding='0';var inner=s.closest('.elementor-inner-section');if(inner)inner.style.padding='0';var con=s.closest('.e-con, .e-con-inner');if(con){con.style.padding='0';con.style.setProperty('--padding-top','0','important');con.style.setProperty('--padding-bottom','0','important');con.style.setProperty('--padding-left','0','important');con.style.setProperty('--padding-right','0','important')}})();
+(function(){
+  var card=document.querySelector('.sg-dcard');
+  if(!card)return;
+  var el=card.parentElement;
+  while(el&&el!==document.body&&el!==document.documentElement){
+    el.style.setProperty('padding','0','important');
+    el.style.setProperty('margin-left','0','important');
+    el.style.setProperty('margin-right','0','important');
+    el.style.setProperty('gap','0','important');
+    el.style.setProperty('max-width','100%','important');
+    el.style.setProperty('width','100%','important');
+    el.style.setProperty('--padding-top','0px','important');
+    el.style.setProperty('--padding-bottom','0px','important');
+    el.style.setProperty('--padding-left','0px','important');
+    el.style.setProperty('--padding-right','0px','important');
+    el.style.setProperty('--padding-inline-start','0px','important');
+    el.style.setProperty('--padding-inline-end','0px','important');
+    el.style.setProperty('--padding-block-start','0px','important');
+    el.style.setProperty('--padding-block-end','0px','important');
+    el.style.setProperty('--container-max-width','100%','important');
+    el=el.parentElement;
+  }
+})();
 </script>
