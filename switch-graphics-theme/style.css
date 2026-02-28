@@ -1,0 +1,25 @@
+/*
+Theme Name: Switch Graphics Theme
+Theme URI: https://switch-graphics.local/theme
+Author: Switch Graphics
+Author URI: https://switch-graphics.local
+Description: A customizable print-shop inspired WordPress theme for agencies, signage studios, and graphic print businesses.
+Version: 1.1.0
+Requires at least: 6.0
+Tested up to: 6.6
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: switch-graphics-theme
+Tags: custom-logo, custom-menu, featured-images, theme-options, translation-ready, blog, one-column, two-columns
+*/
+
+html {
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
