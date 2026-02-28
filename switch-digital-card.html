@@ -85,10 +85,33 @@
 .sg-dcard-hours-row span:last-child{font-weight:600}
 .sg-dcard-hours-row.closed span:last-child{color:#FF5252}
 
-.sg-dcard-social{position:fixed;bottom:0;left:0;right:0;z-index:9999;display:flex;justify-content:center;align-items:center;gap:0;background:#0f0f0f;border-top:1px solid #2a2a2a;padding:10px 0 12px;box-shadow:0 -4px 20px rgba(0,0,0,0.5)}
-.sg-dcard-social a{flex:1;max-width:80px;height:48px;background:transparent;border:none;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:22px;text-decoration:none;color:#888;transition:all 0.3s ease}
-.sg-dcard-social a:hover,.sg-dcard-social a:active{color:#FF6600}
-.sg-dcard-social a span{font-size:9px;font-weight:600;letter-spacing:0.3px}
+.sg-dock{position:fixed;bottom:0;left:0;right:0;z-index:9999;display:flex;justify-content:space-between;align-items:center;background:#000;padding:12px 20px 14px;box-shadow:0 -4px 20px rgba(0,0,0,0.6)}
+.sg-dock *{box-sizing:border-box;margin:0;padding:0}
+.sg-dock-icons{display:flex;align-items:center;gap:16px}
+.sg-dock-icon{width:52px;height:52px;border-radius:50%;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;text-decoration:none;overflow:hidden;flex-shrink:0;transition:transform 0.2s}
+.sg-dock-icon:hover{transform:scale(1.08)}
+.sg-dock-icon.fb{background:#3b5998}
+.sg-dock-icon.ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285AEB 90%)}
+.sg-dock-icon.tt{background:#010101}
+.sg-dock-icon svg{width:28px;height:28px;fill:#fff}
+.sg-dock-save{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#b8860b,#d4a017,#c8910c);border:2.5px solid #fff;border-radius:40px;padding:10px 14px 10px 18px;text-decoration:none;color:#fff;transition:transform 0.2s;flex-shrink:0;cursor:pointer}
+.sg-dock-save:hover{transform:scale(1.04);color:#fff}
+.sg-dock-save-text{display:flex;flex-direction:column;line-height:1.15}
+.sg-dock-save-text span:first-child{font-size:11px;font-weight:500;color:#fff;letter-spacing:0.5px}
+.sg-dock-save-text span:last-child{font-size:14px;font-weight:800;color:#fff;letter-spacing:0.3px}
+.sg-dock-save-plus{width:36px;height:36px;border-radius:50%;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sg-dock-save-plus svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round}
+
+@media(max-width:380px){
+  .sg-dock{padding:10px 12px 12px}
+  .sg-dock-icons{gap:10px}
+  .sg-dock-icon{width:44px;height:44px}
+  .sg-dock-icon svg{width:24px;height:24px}
+  .sg-dock-save{padding:8px 10px 8px 14px;gap:8px}
+  .sg-dock-save-text span:first-child{font-size:9px}
+  .sg-dock-save-text span:last-child{font-size:12px}
+  .sg-dock-save-plus{width:30px;height:30px}
+}
 </style>
 
 <div class="sg-dcard">
@@ -156,19 +179,22 @@
     <div class="sg-dcard-actions">
       <a href="https://wa.me/27681474232?text=Hi%20Switch%20Graphics!%20I%27d%20like%20to%20get%20a%20quote%20please." target="_blank" class="sg-dcard-btn sg-dcard-btn-wa">💬 Get a Quote on WhatsApp</a>
       <a href="https://switchgraphics.co.za" target="_blank" class="sg-dcard-btn sg-dcard-btn-primary">🌐 Visit Our Website</a>
-      <a href="#" onclick="(function(){var v='BEGIN:VCARD\nVERSION:3.0\nFN:Switch Graphics\nORG:Switch Graphics (Pty) Ltd\nTEL;TYPE=CELL:+27681474232\nEMAIL:tinashe@switchgraphics.co.za\nADR:;;16 Harding Street;Newcastle;;2940;South Africa\nURL:https://switchgraphics.co.za\nNOTE:Design | Innovation | Identity\nEND:VCARD';var b=new Blob([v],{type:'text/vcard'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='Switch-Graphics.vcf';a.click();URL.revokeObjectURL(u)})();return false;" class="sg-dcard-btn sg-dcard-btn-outline">📇 Save Contact</a>
     </div>
 
   </div>
 </div>
 
-<!-- Fixed bottom social bar - lives outside card so it stays pinned -->
-<div class="sg-dcard-social">
-  <a href="tel:+27681474232" title="Call">📞<span>Call</span></a>
-  <a href="https://wa.me/27681474232?text=Hi%20Switch%20Graphics!" target="_blank" title="WhatsApp">💬<span>WhatsApp</span></a>
-  <a href="https://www.facebook.com/switchgraphics.co.za" target="_blank" title="Facebook">📘<span>Facebook</span></a>
-  <a href="https://www.instagram.com/switchgraphics.co.za/" target="_blank" title="Instagram">📸<span>Instagram</span></a>
-  <a href="https://www.tiktok.com/@switchgraphics" target="_blank" title="TikTok">🎵<span>TikTok</span></a>
+<!-- Fixed bottom dock bar -->
+<div class="sg-dock">
+  <div class="sg-dock-icons">
+    <a href="https://www.facebook.com/switchgraphics.co.za" target="_blank" class="sg-dock-icon fb" title="Facebook"><svg viewBox="0 0 24 24"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z"/></svg></a>
+    <a href="https://www.instagram.com/switchgraphics.co.za/" target="_blank" class="sg-dock-icon ig" title="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153.509.5.902 1.105 1.153 1.772.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122s-.01 3.056-.06 4.122c-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 01-1.153 1.772c-.5.508-1.105.902-1.772 1.153-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06s-3.056-.01-4.122-.06c-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 01-1.772-1.153A4.904 4.904 0 012.525 18.55c-.247-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12s.01-3.056.06-4.122c.05-1.066.217-1.79.465-2.428a4.88 4.88 0 011.153-1.772A4.897 4.897 0 015.45 2.525c.638-.248 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2zm0 5a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm5.25-3.5a1.25 1.25 0 100 2.5 1.25 1.25 0 000-2.5z"/></svg></a>
+    <a href="https://www.tiktok.com/@switchgraphics" target="_blank" class="sg-dock-icon tt" title="TikTok"><svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V9.49a8.24 8.24 0 004.79 1.53V7.57a4.84 4.84 0 01-1.03-.88z"/></svg></a>
+  </div>
+  <a href="#" onclick="(function(){var v='BEGIN:VCARD\nVERSION:3.0\nFN:Switch Graphics\nORG:Switch Graphics (Pty) Ltd\nTEL;TYPE=CELL:+27681474232\nEMAIL:tinashe@switchgraphics.co.za\nADR:;;16 Harding Street;Newcastle;;2940;South Africa\nURL:https://switchgraphics.co.za\nNOTE:Design | Innovation | Identity\nEND:VCARD';var b=new Blob([v],{type:'text/vcard'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='Switch-Graphics.vcf';a.click();URL.revokeObjectURL(u)})();return false;" class="sg-dock-save">
+    <div class="sg-dock-save-text"><span>SAVE TO</span><span>CONTACTS</span></div>
+    <div class="sg-dock-save-plus"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+  </a>
 </div>
 
 <script>
