@@ -1,7 +1,8 @@
 <!-- Switch Graphics Digital Business Card - Paste into Elementor HTML Widget -->
 <style>
-.sg-dcard{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:420px;margin:0 auto;background:#0f0f0f;border-radius:24px;overflow:hidden;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,0.5);-webkit-font-smoothing:antialiased}
+.sg-dcard{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;width:100%;background:#0f0f0f;overflow:hidden;color:#fff;-webkit-font-smoothing:antialiased}
 .sg-dcard *{box-sizing:border-box;margin:0;padding:0}
+.sg-dcard .elementor-widget-container,.sg-dcard .elementor-element{padding:0!important;margin:0!important}
 
 .sg-dcard-hero{background:linear-gradient(135deg,#FF6600 0%,#ff8533 50%,#ffaa66 100%);padding:40px 28px 32px;text-align:center;position:relative;overflow:hidden}
 .sg-dcard-hero::before{content:'';position:absolute;top:-40%;right:-30%;width:200px;height:200px;background:rgba(255,255,255,0.08);border-radius:50%}
@@ -12,7 +13,7 @@
 .sg-dcard-name{font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;position:relative;z-index:1}
 .sg-dcard-tagline{font-size:13px;opacity:0.9;font-weight:500;letter-spacing:1px;text-transform:uppercase;position:relative;z-index:1}
 
-.sg-dcard-body{padding:24px 20px 20px}
+.sg-dcard-body{padding:24px 20px 24px}
 
 .sg-dcard-contact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .sg-dcard-citem{display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 10px;background:#1a1a1a;border-radius:16px;border:1px solid #2a2a2a;text-decoration:none;color:#fff;transition:all 0.3s ease;cursor:pointer}
@@ -32,8 +33,6 @@
 .sg-dcard-services{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px}
 .sg-dcard-stag{padding:8px 14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;font-size:11px;font-weight:600;color:#ccc;white-space:nowrap}
 
-.sg-dcard-divider2{height:1px;background:linear-gradient(90deg,transparent,#333,transparent);margin:4px 0 20px}
-
 .sg-dcard-bank{background:linear-gradient(135deg,#1a1a1a,#222);border-radius:16px;padding:16px;margin-bottom:20px;border:1px solid #2a2a2a}
 .sg-dcard-bank-title{font-size:12px;color:#FF6600;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .sg-dcard-bank-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid #2a2a2a}
@@ -41,7 +40,7 @@
 .sg-dcard-bank-row span:first-child{color:#888}
 .sg-dcard-bank-row span:last-child{font-weight:600}
 
-.sg-dcard-actions{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.sg-dcard-actions{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
 .sg-dcard-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;color:#fff;transition:all 0.3s ease;text-align:center}
 .sg-dcard-btn:hover{transform:translateY(-2px)}
 .sg-dcard-btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);box-shadow:0 4px 15px rgba(37,211,102,0.3)}
@@ -58,20 +57,9 @@
 .sg-dcard-hours-row span:last-child{font-weight:600}
 .sg-dcard-hours-row.closed span:last-child{color:#FF5252}
 
-.sg-dcard-footer{text-align:center;padding:16px 20px 24px}
-.sg-dcard-footer p{font-size:10px;color:#555;line-height:1.5}
-.sg-dcard-footer a{color:#FF6600;text-decoration:none}
-.sg-dcard-footer a:hover{text-decoration:underline}
-
-.sg-dcard-social{display:flex;justify-content:center;gap:12px;margin-bottom:12px}
+.sg-dcard-social{display:flex;justify-content:center;gap:12px}
 .sg-dcard-social a{width:40px;height:40px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;text-decoration:none;transition:all 0.3s ease}
 .sg-dcard-social a:hover{border-color:#FF6600;background:rgba(255,102,0,0.1);transform:translateY(-2px)}
-
-@media(max-width:460px){
-  .sg-dcard{margin:0;border-radius:0;max-width:100%}
-  .sg-dcard-hero{padding:32px 20px 24px}
-  .sg-dcard-name{font-size:22px}
-}
 </style>
 
 <div class="sg-dcard">
@@ -122,7 +110,7 @@
       <span class="sg-dcard-stag">☕ Mugs & Merch</span>
     </div>
 
-    <div class="sg-dcard-divider2"></div>
+    <div class="sg-dcard-divider"></div>
 
     <!-- Business Hours -->
     <div class="sg-dcard-hours">
@@ -155,11 +143,9 @@
       <a href="https://tiktok.com/@switchgraphics" target="_blank" title="TikTok">🎵</a>
       <a href="https://wa.me/27681474232" target="_blank" title="WhatsApp">💬</a>
     </div>
-
-    <!-- Footer -->
-    <div class="sg-dcard-footer">
-      <p>&copy; 2026 Switch Graphics (Pty) Ltd<br>
-      <a href="https://switchgraphics.co.za">switchgraphics.co.za</a></p>
-    </div>
   </div>
 </div>
+
+<script>
+(function(){var s=document.querySelector('.sg-dcard');if(!s)return;var p=s.closest('.elementor-widget-container');if(p)p.style.padding='0';var w=s.closest('.elementor-widget');if(w)w.style.padding='0';var c=s.closest('.elementor-column-wrap, .elementor-widget-wrap');if(c)c.style.padding='0';var sec=s.closest('.elementor-section');if(sec){sec.style.padding='0';sec.style.margin='0'}var col=s.closest('.elementor-column');if(col)col.style.padding='0';var inner=s.closest('.elementor-inner-section');if(inner)inner.style.padding='0';var con=s.closest('.e-con, .e-con-inner');if(con){con.style.padding='0';con.style.setProperty('--padding-top','0','important');con.style.setProperty('--padding-bottom','0','important');con.style.setProperty('--padding-left','0','important');con.style.setProperty('--padding-right','0','important')}})();
+</script>
